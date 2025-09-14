@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:water_tracking_app/utils/calendarDayBox.dart';
 
 // A simple extension to make the original code work without changes.
 // Using .withOpacity() is generally more idiomatic in Flutter.
@@ -98,10 +99,9 @@ class _HomePageState extends State<HomePage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(25.0),
                     child: BackdropFilter(
-                      // Change sigmaX/sigmaY here to control the blur amount.
-                      // You WILL now see this change.
                       filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
                       child: Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(25.0),
                         decoration: BoxDecoration(
                           // The container's color must be semi-transparent to see the blur
@@ -110,24 +110,20 @@ class _HomePageState extends State<HomePage> {
                             color: colorScheme.surface.withValues(alpha: 0.4),
                             width: 1.5,
                           ),
-                          // The border radius is now controlled by the parent ClipRRect
-                          // but you can add it here too if your border needs it.
                           borderRadius: BorderRadius.circular(25.0),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Today's Progress",
+                              "Today, 12 June 2025",
                               style: textTheme.titleLarge?.copyWith(
                                 color: colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 20),
-                            Icon(
-                              Icons.water_drop,
-                              color: colorScheme.onSurface,
-                              size: 60,
-                            ),
+                            Calendardaybox(),
                             const SizedBox(height: 10),
                             Text(
                               "800 / 2210ml",
