@@ -126,13 +126,14 @@ class _HomePageState extends State<HomePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Calendardaybox(),
-                                Calendardaybox(),
-                                Calendardaybox(),
-                                Calendardaybox(),
-                                Calendardaybox(),
-                                Calendardaybox(),
-                                Calendardaybox(),
+                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Mon', dayOfMonth: '11',),
+                                Calendardaybox( isSelected: true, isCurrentDay: true, dayOfWeek: 'Tue', dayOfMonth: '12',),
+                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Wed', dayOfMonth: '13',),
+                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Thu', dayOfMonth: '14',),
+                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Fri', dayOfMonth: '15',),
+                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Sat', dayOfMonth: '16',),
+                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Sun', dayOfMonth: '17',),
+
                               ],
                             ),
                             const SizedBox(height: 10),
