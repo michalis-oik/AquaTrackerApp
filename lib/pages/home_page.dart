@@ -1,9 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:water_tracking_app/utils/calendarDayBox.dart';
+import 'package:water_tracking_app/utils/calendarDayBox.dart'; // Make sure this path is correct
 
 // A simple extension to make the original code work without changes.
-// Using .withOpacity() is generally more idiomatic in Flutter.
 extension ColorValues on Color {
   Color withValues({int? alpha}) {
     return withAlpha(alpha ?? this.alpha);
@@ -18,6 +17,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 1; // 1 corresponds to Tuesday in our list
+
+  final List<Map<String, String>> days = [
+    {'dayOfWeek': 'Mon', 'dayOfMonth': '11'},
+    {'dayOfWeek': 'Tue', 'dayOfMonth': '12'}, // This is our initial "current day"
+    {'dayOfWeek': 'Wed', 'dayOfMonth': '13'},
+    {'dayOfWeek': 'Thu', 'dayOfMonth': '14'},
+    {'dayOfWeek': 'Fri', 'dayOfMonth': '15'},
+    {'dayOfWeek': 'Sat', 'dayOfMonth': '16'},
+    {'dayOfWeek': 'Sun', 'dayOfMonth': '17'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -25,10 +36,9 @@ class _HomePageState extends State<HomePage> {
     final TextTheme textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Assuming this is inside another widget with a background
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // This is the background that will be blurred
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -93,9 +103,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 40),
-
                   ClipRRect(
                     borderRadius: BorderRadius.circular(25.0),
                     child: BackdropFilter(
@@ -104,7 +112,6 @@ class _HomePageState extends State<HomePage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20.0),
                         decoration: BoxDecoration(
-                          // The container's color must be semi-transparent to see the blur
                           color: colorScheme.surface.withValues(alpha: 0.25),
                           border: Border.all(
                             color: colorScheme.surface.withValues(alpha: 0.4),
@@ -122,21 +129,38 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Mon', dayOfMonth: '11',),
-                                Calendardaybox( isSelected: true, isCurrentDay: true, dayOfWeek: 'Tue', dayOfMonth: '12',),
-                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Wed', dayOfMonth: '13',),
-                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Thu', dayOfMonth: '14',),
-                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Fri', dayOfMonth: '15',),
-                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Sat', dayOfMonth: '16',),
-                                Calendardaybox( isSelected: false, isCurrentDay: false, dayOfWeek: 'Sun', dayOfMonth: '17',),
+                            const SizedBox(height: 15),
 
-                              ],
+                            SizedBox(
+                              height: 85, // Give the list a fixed height
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: days.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    // Add some spacing between the items
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Update the state when an item is tapped
+                                        setState(() {
+                                          _selectedIndex = index;
+                                        });
+                                      },
+                                      child: Calendardaybox(
+                                        dayOfWeek: days[index]['dayOfWeek']!,
+                                        dayOfMonth: days[index]['dayOfMonth']!,
+                                        // Dynamically set based on state
+                                        isSelected: _selectedIndex == index,
+                                        isCurrentDay: index == 1, // Tuesday is the "current" day
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                            const SizedBox(height: 10),
+                            
+                            const SizedBox(height: 15),
                             Text(
                               "800 / 2210ml",
                               style: textTheme.headlineMedium?.copyWith(
