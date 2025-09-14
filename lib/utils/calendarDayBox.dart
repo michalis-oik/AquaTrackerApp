@@ -8,8 +8,8 @@ class Calendardaybox extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
-    const double width = 50;
-    const double height = 70; 
+    const double width = 43;
+    const double height = 65; 
 
     
     return Container(
@@ -39,7 +39,7 @@ class Calendardaybox extends StatelessWidget {
           children: [
             Text(
               'Mon',
-              style: TextStyle(
+              style: textTheme.headlineSmall!.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.8),
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -50,7 +50,7 @@ class Calendardaybox extends StatelessWidget {
               backgroundColor: colorScheme.secondary.withValues(alpha: 0.5),
               child: Text(
                 '23', 
-                style: TextStyle(
+                style: textTheme.headlineSmall!.copyWith(
                   color: colorScheme.onSurface.withValues(alpha: 0.8),
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
                       filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(25.0),
+                        padding: const EdgeInsets.all(20.0),
                         decoration: BoxDecoration(
                           // The container's color must be semi-transparent to see the blur
                           color: colorScheme.surface.withValues(alpha: 0.25),
@@ -122,8 +122,19 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            Calendardaybox(),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Calendardaybox(),
+                                Calendardaybox(),
+                                Calendardaybox(),
+                                Calendardaybox(),
+                                Calendardaybox(),
+                                Calendardaybox(),
+                                Calendardaybox(),
+                              ],
+                            ),
                             const SizedBox(height: 10),
                             Text(
                               "800 / 2210ml",
