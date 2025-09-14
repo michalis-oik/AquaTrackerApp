@@ -19,11 +19,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Aqua Tracking App',
       theme: ThemeData(
-        primarySwatch: Colors.cyan,
-        iconTheme: IconThemeData(
-          color: Colors.grey[800],
-          size: 30,
+        // Use colorScheme for modern Flutter theming
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF928FFF), // Your primary color
+          primary: const Color(0xFF928FFF),
+          secondary: const Color(0xFFD5D4FF),
         ),
+        
+        // You can also define other colors
+        scaffoldBackgroundColor: const Color(0xFFD5D4FF),
+
+        // This makes sure other UI elements follow the theme
+        useMaterial3: true,
       ),
       home: const HomePage(),
     );
