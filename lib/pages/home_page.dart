@@ -39,6 +39,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
+          // ... (Container with gradient remains the same)
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -57,6 +58,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ... (Top Row with profile and notifications remains the same)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -131,18 +133,15 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 15),
 
-                            SizedBox(
-                              height: 85, // Give the list a fixed height
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: days.length,
-                                itemBuilder: (context, index) {
-                                  return Padding(
+                            // --- REPLACEMENT CODE STARTS HERE ---
+                            Row(
+                              children: List.generate(days.length, (index) {
+                                return Expanded(
+                                  child: Padding(
                                     // Add some spacing between the items
-                                    padding: const EdgeInsets.only(right: 8.0),
+                                    padding: const EdgeInsets.symmetric(horizontal: 3.0),
                                     child: GestureDetector(
                                       onTap: () {
-                                        // Update the state when an item is tapped
                                         setState(() {
                                           _selectedIndex = index;
                                         });
@@ -150,15 +149,15 @@ class _HomePageState extends State<HomePage> {
                                       child: Calendardaybox(
                                         dayOfWeek: days[index]['dayOfWeek']!,
                                         dayOfMonth: days[index]['dayOfMonth']!,
-                                        // Dynamically set based on state
                                         isSelected: _selectedIndex == index,
-                                        isCurrentDay: index == 1, // Tuesday is the "current" day
+                                        isCurrentDay: index == 1,
                                       ),
                                     ),
-                                  );
-                                },
-                              ),
+                                  ),
+                                );
+                              }),
                             ),
+                            // --- REPLACEMENT CODE ENDS HERE ---
                             
                             const SizedBox(height: 15),
                             Text(
