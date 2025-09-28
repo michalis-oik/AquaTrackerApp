@@ -194,7 +194,133 @@ class _HomePageState extends State<HomePage> {
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.7)
               ),
-            )
+            ),
+            const SizedBox(height: 40),
+
+            Row(
+              children: [
+                // Elevated Button with shadow
+                Container(
+                  decoration: BoxDecoration(
+                    // The borderRadius here MUST MATCH the button's borderRadius
+                    borderRadius: BorderRadius.circular(20), 
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withValues(alpha: 0.5), // Glow color
+                        spreadRadius: 2,
+                        blurRadius: 15,
+                        offset: const Offset(-2, 5), // changes position of shadow
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 0, 
+                    ),
+                    child: const Text("Drink 200 ml"),
+                    onPressed: () {
+                      // add 200 ml to the counter
+                      setState(() {
+                        _currentWaterIntake += 200;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                
+                // Use a SizedBox to give the Stack a predictable size, 
+                // making it easier to position the small icon.
+                SizedBox(
+                  width: 40,  // Adjust size as needed
+                  height: 40, // Must be the same as width for a circle
+                  child: Stack(
+                    // This allows the small icon to "poke out" without being cut off.
+                    clipBehavior: Clip.none, 
+                    children: [
+                      // --- 1. Your Main Circular Button (the bottom layer) ---
+                      // This is the same code you had, now as the first child of the Stack.
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withValues(alpha: 0.5),
+                              spreadRadius: 2,
+                              blurRadius: 15,
+                              offset: const Offset(2, 5),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
+                            shape: const CircleBorder(),
+                            padding: const EdgeInsets.all(4), // Increased padding for a better look
+                            elevation: 0,
+                          ),
+                          child: Image.asset(
+                            'assets/icons/glass-waterIcon.png',
+                            color: colorScheme.onPrimary, // Match the foregroundColor
+                            width: 20,
+                            height: 20,
+                          ),
+                          onPressed: () {
+                            // add 200 ml to the counter
+                            setState(() {
+                              _currentWaterIntake += 200;
+                            });
+                          },
+                        ),
+                      ),
+
+                      // --- 2. The Small "Repick" Icon (the top layer) ---
+                      Positioned(
+                        right: -3,  // Position it 0 pixels from the right edge of the Stack
+                        bottom: 3, // Position it 0 pixels from the bottom edge of the Stack
+                        child: GestureDetector(
+                          onTap: () {
+                            // TODO: Add your logic for the "repick" action here
+                            print("Repick icon tapped!"); 
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(2), // Space around the inner icon
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colorScheme.secondary, // A contrasting color
+                              // Optional: Add a small border to make it pop
+                              border: Border.all(color: colorScheme.primary, width: 1),
+                            ),
+                            child: Icon(
+                              Icons.swap_horiz,
+                              color: colorScheme.primary,
+                              size: 7,
+                              // --- ADD THIS SHADOWS PROPERTY ---
+                              shadows: [
+                                Shadow(
+                                  color: colorScheme.primary, // The same color as the icon
+                                  blurRadius: 0.5,           // A very small blur radius
+                                ),
+                                // You can even add a second layer for more "boldness"
+                                Shadow(
+                                  color: colorScheme.primary,
+                                  blurRadius: 1.0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         Text(

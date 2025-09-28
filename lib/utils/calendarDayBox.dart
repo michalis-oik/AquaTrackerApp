@@ -29,7 +29,7 @@ class Calendardaybox extends StatelessWidget {
     final TextTheme textTheme = theme.textTheme;
 
     // This logic remains exactly the same. When isSelected changes, these values change.
-    final Color boxColor = isSelected ? colorScheme.primary : Colors.white;
+    final Color boxColor = isSelected ? colorScheme.primary : Colors.white.withValues(alpha: 0.8);
     final Color dayOfWeekColor = isSelected ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.8);
     final Color circleColor = isSelected ? Colors.white.withValues(alpha: 0.25) : colorScheme.primary.withValues(alpha: 0.1);
     final Color dayOfMonthColor = isSelected ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.9);
