@@ -2,12 +2,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:water_tracking_app/utils/calendarDayBox.dart';
+import 'package:water_tracking_app/utils/glassmorphism_card.dart';
+
+// --- (Place the GlassmorphismCard widget code from Step 1 here if not in a separate file) ---
 
 // --- UPDATED EXTENSION ---
 // This version now correctly handles a double for opacity, just as you wanted.
 // It's more intuitive and works like the old `withOpacity`.
 extension ColorValues on Color {
-
   Color withValues({double? opacity}) {
     if (opacity == null) return this;
     // We convert the double (0.0 to 1.0) to an integer alpha value (0 to 255) internally.
@@ -57,14 +59,12 @@ class _HomePageState extends State<HomePage> {
       _currentWaterIntake += 250;
     });
   }
-
-  @override
-  Widget build(BuildContext context) {
+  
+  Widget _buildWaterTrackerCardContent(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
-
-    // Calculations for the display boxes
+    
     final double percentageOfGoal = (_currentWaterIntake / _dailyGoal) * 100;
     final double percentageDifference = percentageOfGoal - 100;
     
@@ -75,7 +75,145 @@ class _HomePageState extends State<HomePage> {
         ? Colors.green.shade400 
         : colorScheme.onSurface.withValues(alpha: 0.8);
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Today, ${DateFormat('d MMMM yyyy').format(DateTime.now())}",
+          style: textTheme.titleLarge?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 15),
+        Row(
+          children: List.generate(_weekDays.length, (index) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = index),
+                  child: Calendardaybox(
+                    dayOfWeek: _weekDays[index]['dayOfWeek']!,
+                    dayOfMonth: _weekDays[index]['dayOfMonth']!,
+                    isSelected: _selectedIndex == index,
+                    isCurrentDay: _currentDayIndex == index,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 25),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: colorScheme.surface.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.water_drop_outlined, color: colorScheme.primary, size: 28),
+                    const SizedBox(height: 8),
+                    Text(
+                      "${_currentWaterIntake}ml",
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Total Drunk",
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: colorScheme.surface.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.track_changes_outlined, color: goalStatusColor, size: 28),
+                    const SizedBox(height: 8),
+                    Text(
+                      goalStatusText,
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Goal Progress",
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildDailyGoalCardContent(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Daily Drink Target",
+              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Stay hydrated, stay healthy!",
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.7)
+              ),
+            )
+          ],
+        ),
+        Text(
+          "${_dailyGoal}ml",
+          style: textTheme.headlineSmall?.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.bold
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
+    final TextTheme textTheme = theme.textTheme;
+    
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -84,7 +222,6 @@ class _HomePageState extends State<HomePage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  // Now using the clean, correct syntax
                   colorScheme.primary.withValues(alpha: 0.7),
                   colorScheme.surface,
                 ],
@@ -95,11 +232,11 @@ class _HomePageState extends State<HomePage> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0), // Removed bottom padding for edge-to-edge scroll
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Static Top Row
+                  // Static Top Row (remains the same)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -145,120 +282,16 @@ class _HomePageState extends State<HomePage> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          // Glassmorphism Card
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(25.0),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(20.0),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surface.withValues(alpha: 0.25),
-                                  border: Border.all(color: colorScheme.surface.withValues(alpha: 0.4), width: 1.5),
-                                  borderRadius: BorderRadius.circular(25.0),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Today, ${DateFormat('d MMMM yyyy').format(DateTime.now())}",
-                                      style: textTheme.titleLarge?.copyWith(
-                                        color: colorScheme.onSurface,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 15),
-                                    Row(
-                                      children: List.generate(_weekDays.length, (index) {
-                                        return Expanded(
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 3.0),
-                                            child: GestureDetector(
-                                              onTap: () => setState(() => _selectedIndex = index),
-                                              child: Calendardaybox(
-                                                dayOfWeek: _weekDays[index]['dayOfWeek']!,
-                                                dayOfMonth: _weekDays[index]['dayOfMonth']!,
-                                                isSelected: _selectedIndex == index,
-                                                isCurrentDay: _currentDayIndex == index,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                    ),
-                                    const SizedBox(height: 25),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                                            decoration: BoxDecoration(
-                                              color: colorScheme.surface.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(15),
-                                              border: Border.all(color: colorScheme.surface.withValues(alpha: 0.2)),
-                                            ),
-                                            child: Column(
-                                              children: [
-                                                Icon(Icons.water_drop_outlined, color: colorScheme.primary, size: 28),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  "${_currentWaterIntake}ml",
-                                                  style: textTheme.titleLarge?.copyWith(
-                                                    color: colorScheme.onSurface,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "Total Drunk",
-                                                  style: textTheme.bodySmall?.copyWith(
-                                                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 15),
-                                        Expanded(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                                            decoration: BoxDecoration(
-                                              color: colorScheme.surface.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(15),
-                                              border: Border.all(color: colorScheme.surface.withValues(alpha: 0.2)),
-                                            ),
-                                            child: Column(
-                                              children: [
-                                                Icon(Icons.track_changes_outlined, color: goalStatusColor, size: 28),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  goalStatusText,
-                                                  style: textTheme.titleLarge?.copyWith(
-                                                    color: colorScheme.onSurface,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "Goal Progress",
-                                                  style: textTheme.bodySmall?.copyWith(
-                                                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          GlassmorphismCard(
+                            child: _buildWaterTrackerCardContent(context),
                           ),
                           const SizedBox(height: 20),
+
+                          GlassmorphismCard(
+                            child: _buildDailyGoalCardContent(context),
+                          ),
+                          const SizedBox(height: 20),
+
                           // Add Water Button (now inside the scroll view)
                           SizedBox(
                             width: double.infinity,
@@ -275,7 +308,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           ),
-                           const SizedBox(height: 20), // Padding at the very bottom
+                          const SizedBox(height: 20), // Padding at the very bottom
                         ],
                       ),
                     ),
