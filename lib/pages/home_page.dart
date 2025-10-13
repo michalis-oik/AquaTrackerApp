@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:water_tracking_app/utils/calendarDayBox.dart';
 import 'package:water_tracking_app/utils/glassmorphism_card.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
 // --- (Place the GlassmorphismCard widget code from Step 1 here if not in a separate file) ---
 
@@ -272,9 +273,11 @@ class _HomePageState extends State<HomePage> {
                           ),
                           onPressed: () {
                             // add 200 ml to the counter
-                            setState(() {
-                              _currentWaterIntake += 200;
-                            });
+                            // setState(() {
+                            //   _currentWaterIntake += 200;
+                            // });
+                            // TODO: Add your logic for the "repick" action here
+                            print("Repick icon tapped!"); 
                           },
                         ),
                       ),
@@ -323,13 +326,44 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        Text(
-          "${_dailyGoal}ml",
-          style: textTheme.headlineSmall?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.bold
+        // Text(
+        //   "${_dailyGoal}ml",
+        //   style: textTheme.headlineSmall?.copyWith(
+        //     color: colorScheme.primary,
+        //     fontWeight: FontWeight.bold
+        //   ),
+        // ),
+        CircularPercentIndicator(
+          radius: 60.0,
+          lineWidth: 10.0,
+          percent: 221 / 300, // value between 0.0 and 1.0
+          animation: true,
+          animationDuration: 80,
+          circularStrokeCap: CircularStrokeCap.round,
+          backgroundColor: colorScheme.primary.withValues(alpha: 0.3),
+          progressColor: colorScheme.primary,
+          center: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                '2210ml',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '400ml',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
-        ),
+        )
       ],
     );
   }
