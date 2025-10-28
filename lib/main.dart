@@ -24,6 +24,7 @@ class MyApp extends StatelessWidget {
           seedColor: const Color(0xFF928FFF), // Your primary color
           primary: const Color(0xFF928FFF),
           secondary: const Color(0xFFD5D4FF),
+          outline: Colors.white.withValues(alpha: 0.7),
         ),
         
         // You can also define other colors

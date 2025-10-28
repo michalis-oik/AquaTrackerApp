@@ -4,12 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:water_tracking_app/utils/calendarDayBox.dart';
 import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:water_tracking_app/utils/hydrationStatsChart.dart';
 
-// --- (Place the GlassmorphismCard widget code from Step 1 here if not in a separate file) ---
-
-// --- UPDATED EXTENSION ---
-// This version now correctly handles a double for opacity, just as you wanted.
-// It's more intuitive and works like the old `withOpacity`.
 extension ColorValues on Color {
   Color withValues({double? opacity}) {
     if (opacity == null) return this;
@@ -29,6 +25,8 @@ class _HomePageState extends State<HomePage> {
   // State management variables
   int _currentWaterIntake = 0;
   final int _dailyGoal = 2210;
+  
+  List<double> myHydrationWeeklyData = [55, 38, 70, 48, 48, 70, 75];
 
   List<Map<String, String>> _weekDays = [];
   int _selectedIndex = 0;
@@ -174,7 +172,6 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
-  
   Widget _buildDailyGoalCardContent(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
@@ -452,24 +449,8 @@ class _HomePageState extends State<HomePage> {
                             child: _buildDailyGoalCardContent(context),
                           ),
                           const SizedBox(height: 20),
-
-                          // Add Water Button (now inside the scroll view)
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _addWater,
-                              icon: const Icon(Icons.add),
-                              label: const Text("Add 250ml"),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20), // Padding at the very bottom
+                          HydrationStatsChart(weeklyData: myHydrationWeeklyData),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
