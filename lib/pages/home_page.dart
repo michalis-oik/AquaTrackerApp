@@ -27,7 +27,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // State management variables
-  int _currentWaterIntake = 800;
+  int _currentWaterIntake = 0;
   final int _dailyGoal = 2210;
 
   List<Map<String, String>> _weekDays = [];
@@ -289,7 +289,7 @@ class _HomePageState extends State<HomePage> {
                         child: GestureDetector(
                           onTap: () {
                             // TODO: Add your logic for the "repick" action here
-                            print("Repick icon tapped!"); 
+                            //print("Repick icon tapped!"); 
                           },
                           child: Container(
                             padding: const EdgeInsets.all(2), // Space around the inner icon
@@ -336,7 +336,8 @@ class _HomePageState extends State<HomePage> {
         CircularPercentIndicator(
           radius: 60.0,
           lineWidth: 10.0,
-          percent: 221 / 300, // value between 0.0 and 1.0
+          // percent should be between 0.0 and 1.0 and I want it to see from currentintake to dailygoal. if current intake is > daily goal then put 1.0
+          percent:(_currentWaterIntake / _dailyGoal).clamp(0.0, 1.0), // value between 0.0 and 1.0
           animation: true,
           animationDuration: 80,
           circularStrokeCap: CircularStrokeCap.round,
@@ -345,17 +346,17 @@ class _HomePageState extends State<HomePage> {
           center: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                '2210ml',
+              Text(
+                "${_dailyGoal}ml",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
-                '400ml',
+                "${(_dailyGoal - _currentWaterIntake).clamp(0, double.infinity).toStringAsFixed(0)}ml",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
