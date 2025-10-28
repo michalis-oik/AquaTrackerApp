@@ -128,6 +128,47 @@ class HydrationStatsChart extends StatelessWidget {
                             ],
                           );
                         }),
+                        barTouchData: BarTouchData(
+                          // 1. Customize the tooltip's appearance
+                          touchTooltipData: BarTouchTooltipData(
+                            // 2. Set the background color of the tooltip
+                            tooltipBgColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                            tooltipRoundedRadius: 5,
+                            
+                            // 3. Define what content and style the tooltip text has
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              String weekDay;
+                              switch (group.x.toInt()) {
+                                case 0: weekDay = 'Monday'; break;
+                                case 1: weekDay = 'Tuesday'; break;
+                                case 2: weekDay = 'Wednesday'; break;
+                                case 3: weekDay = 'Thursday'; break;
+                                case 4: weekDay = 'Friday'; break;
+                                case 5: weekDay = 'Saturday'; break;
+                                case 6: weekDay = 'Sunday'; break;
+                                default: throw Error();
+                              }
+                              return BarTooltipItem(
+                                '$weekDay\n', // Text for the first line
+                                TextStyle(   // Style for the first line
+                                  color: Theme.of(context).colorScheme.onSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                                ),
+                                children: <TextSpan>[
+                                  TextSpan(
+                                    text: (rod.toY).toString(), // Text for the second line (the value)
+                                    style: TextStyle(           // Style for the second line
+                                      color: Theme.of(context).colorScheme.onSecondary,
+                                      fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
                   ),
