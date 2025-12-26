@@ -234,10 +234,12 @@ class _HomePageState extends State<HomePage> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           elevation: 0, 
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                         ),
                         child: Text(
-                          "Drink ${_selectedDrink['name']} (200ml)",
-                          maxLines: 1,
+                          "Drink ${_selectedDrink['name']}\n(200ml)",
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         onPressed: () {
