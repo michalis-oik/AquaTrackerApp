@@ -297,17 +297,26 @@ class _HomePageState extends State<HomePage> {
                                   ),
                             onPressed: () async {
                               final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const DrinkSelectionPage(),
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DrinkSelectionPage(
+                                  initialIntake: _currentWaterIntake,
+                                  dailyGoal: _dailyGoal,
+                                  initialSelectedDrink: _selectedDrink,
+                                  onDrinkAdded: (amount) {
+                                    setState(() {
+                                      _currentWaterIntake += amount;
+                                    });
+                                  },
                                 ),
-                              );
+                              ),
+                            );
 
-                              if (result != null) {
-                                setState(() {
-                                  _selectedDrink = result;
-                                });
-                              }
+                            if (result != null) {
+                              setState(() {
+                                _selectedDrink = result;
+                              });
+                            }
                             },
                           ),
                         ),
