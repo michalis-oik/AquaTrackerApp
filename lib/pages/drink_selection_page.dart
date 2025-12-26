@@ -13,12 +13,12 @@ class DrinkSelectionPage extends StatelessWidget {
   const DrinkSelectionPage({super.key});
 
   final List<Map<String, dynamic>> drinks = const [
-    {'name': 'Water', 'icon': Icons.water_drop, 'color': Colors.blue},
-    {'name': 'Coffee', 'icon': Icons.coffee, 'color': Colors.brown},
-    {'name': 'Tea', 'icon': Icons.emoji_food_beverage, 'color': Colors.orange},
-    {'name': 'Juice', 'icon': Icons.local_drink, 'color': Colors.orangeAccent},
-    {'name': 'Soda', 'icon': Icons.local_bar, 'color': Colors.purple}, 
-    {'name': 'Milk', 'icon': Icons.bedroom_baby, 'color': Colors.grey}, 
+    {'name': 'Water', 'icon': Icons.water_drop, 'color': Colors.blue, 'defaultAmount': 250},
+    {'name': 'Coffee', 'icon': Icons.coffee, 'color': Colors.brown, 'defaultAmount': 150},
+    {'name': 'Tea', 'icon': Icons.emoji_food_beverage, 'color': Colors.orange, 'defaultAmount': 200},
+    {'name': 'Juice', 'icon': Icons.local_drink, 'color': Colors.orangeAccent, 'defaultAmount': 200},
+    {'name': 'Soda', 'icon': Icons.local_bar, 'color': Colors.purple, 'defaultAmount': 330}, 
+    {'name': 'Milk', 'icon': Icons.bedroom_baby, 'color': Colors.grey, 'defaultAmount': 250}, 
   ];
 
   @override
@@ -112,6 +112,13 @@ class DrinkSelectionPage extends StatelessWidget {
                                   style: textTheme.titleMedium?.copyWith(
                                     color: colorScheme.onSurface,
                                     fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "${drink['defaultAmount']} ml",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                                   ),
                                 ),
                               ],

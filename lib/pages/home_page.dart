@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   int _currentWaterIntake = 0;
   final int _dailyGoal = 2210;
 
-  Map<String, dynamic> _selectedDrink = {'name': 'Water', 'icon': Icons.water_drop, 'color': Colors.blue};
+  Map<String, dynamic> _selectedDrink = {'name': 'Water', 'icon': Icons.water_drop, 'color': Colors.blue, 'defaultAmount': 250};
   
   List<double> myHydrationWeeklyData = [55, 38, 70, 48, 48, 70, 75];
 
@@ -237,15 +237,14 @@ class _HomePageState extends State<HomePage> {
                           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                         ),
                         child: Text(
-                          "Drink ${_selectedDrink['name']}\n(200ml)",
+                          "Drink ${_selectedDrink['name']}\n(${_selectedDrink['defaultAmount']}ml)",
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         onPressed: () {
-                          // add 200 ml to the counter
                           setState(() {
-                            _currentWaterIntake += 200;
+                            _currentWaterIntake += (_selectedDrink['defaultAmount'] as int);
                           });
                         },
                       ),
