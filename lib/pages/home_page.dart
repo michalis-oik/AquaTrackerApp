@@ -5,6 +5,7 @@ import 'package:water_tracking_app/utils/calendarDayBox.dart';
 import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:water_tracking_app/utils/hydrationStatsChart.dart';
+import 'package:water_tracking_app/pages/drink_selection_page.dart';
 
 extension ColorValues on Color {
   Color withValues({double? opacity}) {
@@ -25,6 +26,8 @@ class _HomePageState extends State<HomePage> {
   // State management variables
   int _currentWaterIntake = 0;
   final int _dailyGoal = 2210;
+
+  Map<String, dynamic> _selectedDrink = {'name': 'Water', 'icon': Icons.water_drop, 'color': Colors.blue};
   
   List<double> myHydrationWeeklyData = [55, 38, 70, 48, 48, 70, 75];
 
@@ -118,11 +121,14 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Icon(Icons.water_drop_outlined, color: colorScheme.primary, size: 28),
                     const SizedBox(height: 8),
-                    Text(
-                      "${_currentWaterIntake}ml",
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "${_currentWaterIntake}ml",
+                        style: textTheme.titleLarge?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -131,6 +137,8 @@ class _HomePageState extends State<HomePage> {
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -149,11 +157,14 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Icon(Icons.track_changes_outlined, color: goalStatusColor, size: 28),
                     const SizedBox(height: 8),
-                    Text(
-                      goalStatusText,
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        goalStatusText,
+                        style: textTheme.titleLarge?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -162,6 +173,8 @@ class _HomePageState extends State<HomePage> {
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -179,149 +192,165 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Daily Drink Target",
-              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Stay hydrated, stay healthy!",
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.7)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Daily Drink Target",
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 40),
+              const SizedBox(height: 4),
+              Text(
+                "Stay hydrated, stay healthy!",
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.7)
+                ),
+              ),
+              const SizedBox(height: 40),
 
-            Row(
-              children: [
-                // Elevated Button with shadow
-                Container(
-                  decoration: BoxDecoration(
-                    // The borderRadius here MUST MATCH the button's borderRadius
-                    borderRadius: BorderRadius.circular(20), 
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.5), // Glow color
-                        spreadRadius: 2,
-                        blurRadius: 15,
-                        offset: const Offset(-2, 5), // changes position of shadow
+              Row(
+                children: [
+                  // Elevated Button with shadow
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        // The borderRadius here MUST MATCH the button's borderRadius
+                        borderRadius: BorderRadius.circular(20), 
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.5), // Glow color
+                            spreadRadius: 2,
+                            blurRadius: 15,
+                            offset: const Offset(-2, 5), // changes position of shadow
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 0, 
+                        ),
+                        child: Text(
+                          "Drink ${_selectedDrink['name']} (200ml)",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onPressed: () {
+                          // add 200 ml to the counter
+                          setState(() {
+                            _currentWaterIntake += 200;
+                          });
+                        },
                       ),
-                      elevation: 0, 
                     ),
-                    child: const Text("Drink 200 ml"),
-                    onPressed: () {
-                      // add 200 ml to the counter
-                      setState(() {
-                        _currentWaterIntake += 200;
-                      });
-                    },
                   ),
-                ),
-                const SizedBox(width: 10),
-                
-                // Use a SizedBox to give the Stack a predictable size, 
-                // making it easier to position the small icon.
-                SizedBox(
-                  width: 40,  // Adjust size as needed
-                  height: 40, // Must be the same as width for a circle
-                  child: Stack(
-                    // This allows the small icon to "poke out" without being cut off.
-                    clipBehavior: Clip.none, 
-                    children: [
-                      // --- 1. Your Main Circular Button (the bottom layer) ---
-                      // This is the same code you had, now as the first child of the Stack.
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary.withValues(alpha: 0.5),
-                              spreadRadius: 2,
-                              blurRadius: 15,
-                              offset: const Offset(2, 5),
+                  const SizedBox(width: 10),
+                  
+                  // Use a SizedBox to give the Stack a predictable size, 
+                  // making it easier to position the small icon.
+                  SizedBox(
+                    width: 40,  // Adjust size as needed
+                    height: 40, // Must be the same as width for a circle
+                    child: Stack(
+                      // This allows the small icon to "poke out" without being cut off.
+                      clipBehavior: Clip.none, 
+                      children: [
+                        // --- 1. Your Main Circular Button (the bottom layer) ---
+                        // This is the same code you had, now as the first child of the Stack.
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.primary.withValues(alpha: 0.5),
+                                spreadRadius: 2,
+                                blurRadius: 15,
+                                offset: const Offset(2, 5),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
+                              shape: const CircleBorder(),
+                              padding: const EdgeInsets.all(4), // Increased padding for a better look
+                              elevation: 0,
                             ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            foregroundColor: colorScheme.onPrimary,
-                            shape: const CircleBorder(),
-                            padding: const EdgeInsets.all(4), // Increased padding for a better look
-                            elevation: 0,
-                          ),
-                          child: Image.asset(
-                            'assets/icons/glass-waterIcon.png',
-                            color: colorScheme.onPrimary, // Match the foregroundColor
-                            width: 20,
-                            height: 20,
-                          ),
-                          onPressed: () {
-                            // add 200 ml to the counter
-                            // setState(() {
-                            //   _currentWaterIntake += 200;
-                            // });
-                            // TODO: Add your logic for the "repick" action here
-                            print("Repick icon tapped!"); 
-                          },
-                        ),
-                      ),
+                            child: _selectedDrink['name'] == 'Water'
+                                ? Image.asset(
+                                    'assets/icons/glass-waterIcon.png',
+                                    color: colorScheme.onPrimary, // Match the foregroundColor
+                                    width: 20,
+                                    height: 20,
+                                  )
+                                : Icon(
+                                    _selectedDrink['icon'],
+                                    color: colorScheme.onPrimary,
+                                    size: 20,
+                                  ),
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const DrinkSelectionPage(),
+                                ),
+                              );
 
-                      // --- 2. The Small "Repick" Icon (the top layer) ---
-                      Positioned(
-                        right: -3,  // Position it 0 pixels from the right edge of the Stack
-                        bottom: 3, // Position it 0 pixels from the bottom edge of the Stack
-                        child: GestureDetector(
-                          onTap: () {
-                            // TODO: Add your logic for the "repick" action here
-                            //print("Repick icon tapped!"); 
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(2), // Space around the inner icon
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: colorScheme.secondary, // A contrasting color
-                              // Optional: Add a small border to make it pop
-                              border: Border.all(color: colorScheme.primary, width: 1),
-                            ),
-                            child: Icon(
-                              Icons.swap_horiz,
-                              color: colorScheme.primary,
-                              size: 7,
-                              // --- ADD THIS SHADOWS PROPERTY ---
-                              shadows: [
-                                Shadow(
-                                  color: colorScheme.primary, // The same color as the icon
-                                  blurRadius: 0.5,           // A very small blur radius
-                                ),
-                                // You can even add a second layer for more "boldness"
-                                Shadow(
-                                  color: colorScheme.primary,
-                                  blurRadius: 1.0,
-                                ),
-                              ],
+                              if (result != null) {
+                                setState(() {
+                                  _selectedDrink = result;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+
+                        // --- 2. The Small "Repick" Icon (the top layer) ---
+                        Positioned(
+                          right: -3,  // Position it 0 pixels from the right edge of the Stack
+                          bottom: 3, // Position it 0 pixels from the bottom edge of the Stack
+                          child: IgnorePointer(
+                            child: Container(
+                              padding: const EdgeInsets.all(2), // Space around the inner icon
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: colorScheme.secondary, // A contrasting color
+                                // Optional: Add a small border to make it pop
+                                border: Border.all(color: colorScheme.primary, width: 1),
+                              ),
+                              child: Icon(
+                                Icons.swap_horiz,
+                                color: colorScheme.primary,
+                                size: 7,
+                                // --- ADD THIS SHADOWS PROPERTY ---
+                                shadows: [
+                                  Shadow(
+                                    color: colorScheme.primary, // The same color as the icon
+                                    blurRadius: 0.5,           // A very small blur radius
+                                  ),
+                                  // You can even add a second layer for more "boldness"
+                                  Shadow(
+                                    color: colorScheme.primary,
+                                    blurRadius: 1.0,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
         // Text(
         //   "${_dailyGoal}ml",
@@ -331,7 +360,7 @@ class _HomePageState extends State<HomePage> {
         //   ),
         // ),
         CircularPercentIndicator(
-          radius: 60.0,
+          radius: 55.0,
           lineWidth: 10.0,
           // percent should be between 0.0 and 1.0 and I want it to see from currentintake to dailygoal. if current intake is > daily goal then put 1.0
           percent:(_currentWaterIntake / _dailyGoal).clamp(0.0, 1.0), // value between 0.0 and 1.0

@@ -47,13 +47,18 @@ class HydrationStatsChart extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hydration Stats',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                      Expanded(
+                        child: Text(
+                          'Hydration Stats',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         'This Week',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -106,7 +111,7 @@ class HydrationStatsChart extends StatelessWidget {
                               interval: 25,
                               getTitlesWidget: (value, meta) =>
                                   getLeftTitles(context, value, meta),
-                              reservedSize: 42,
+                              reservedSize: 38,
                             ),
                           ),
                         ),
@@ -199,7 +204,7 @@ class HydrationStatsChart extends StatelessWidget {
       case 6: text = Text('Sun', style: style); break;
       default: text = const Text(''); break;
     }
-    return SideTitleWidget(axisSide: meta.axisSide, space: 16, child: text);
+    return SideTitleWidget(axisSide: meta.axisSide, space: 12, child: text);
   }
 
   Widget getLeftTitles(BuildContext context, double value, TitleMeta meta) {
