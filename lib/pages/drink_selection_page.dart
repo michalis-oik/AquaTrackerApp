@@ -83,7 +83,7 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
               children: [
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -210,18 +210,21 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
     double percentage = (_currentIntake / widget.dailyGoal).clamp(0.0, 1.0);
 
     return SizedBox(
-      width: 220,
+      width: 280, // Increased width to give icons space outside the ring
       height: 220,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Background Ring
+          // Background Ring - perfectly sized to match the CircularProgressIndicator
           Container(
             width: 210,
             height: 210,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2), width: 10),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.2), 
+                width: 10,
+              ),
             ),
           ),
           
@@ -296,12 +299,12 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
           
           // Heart and Water Drop icons
           Positioned(
-            left: 5,
+            left: 0,
             bottom: 40,
             child: Icon(Icons.favorite, color: Colors.orange.shade300, size: 28),
           ),
           Positioned(
-            right: 5,
+            right: 0,
             bottom: 40,
             child: Icon(Icons.water_drop, color: Colors.blue.shade300, size: 28),
           ),
@@ -320,15 +323,18 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
           _selectedDrink = drink;
         });
       },
-      child: GlassmorphismCard(
-        padding: const EdgeInsets.all(8),
-        borderRadius: 20,
-        blur: isSelected ? 20 : 10,
-        child: Container(
-          decoration: isSelected ? BoxDecoration(
-            border: Border.all(color: colorScheme.primary, width: 2),
-            borderRadius: BorderRadius.circular(20),
-          ) : null,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: GlassmorphismCard(
+          padding: const EdgeInsets.all(8),
+          borderRadius: 20,
+          blur: isSelected ? 20 : 10,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
