@@ -66,15 +66,15 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
     final TextTheme textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          // Background Gradient matching Home
+          // Background Gradient matching Home but fully opaque
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  colorScheme.primary.withValues(alpha: 0.7),
+                  colorScheme.primary.withAlpha(255),
                   colorScheme.surface,
                 ],
                 begin: Alignment.topLeft,

@@ -14,7 +14,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _isDrinkSelectionOpen = false;
   
   // Shared state for the app
-  int _currentWaterIntake = 800;
+  int _currentWaterIntake = 0;
   final int _dailyGoal = 2210;
   Map<String, dynamic> _selectedDrink = {
     'name': 'Water', 

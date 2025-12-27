@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:water_tracking_app/utils/calendarDayBox.dart';
@@ -224,13 +223,13 @@ class _HomePageState extends State<HomePage> {
                           elevation: 0, 
                           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                         ),
+                        onPressed: widget.onAddWater,
                         child: Text(
                           "Drink ${widget.selectedDrink['name']}\n(${widget.selectedDrink['defaultAmount']}ml)",
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        onPressed: widget.onAddWater,
                       ),
                     ),
                   ),
@@ -261,6 +260,7 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.all(4),
                               elevation: 0,
                             ),
+                            onPressed: widget.onSelectDrinkTap,
                             child: widget.selectedDrink['name'] == 'Water'
                                 ? Image.asset(
                                     'assets/icons/glass-waterIcon.png',
@@ -273,7 +273,6 @@ class _HomePageState extends State<HomePage> {
                                     color: colorScheme.onPrimary,
                                     size: 20,
                                   ),
-                            onPressed: widget.onSelectDrinkTap,
                           ),
                         ),
                         Positioned(
