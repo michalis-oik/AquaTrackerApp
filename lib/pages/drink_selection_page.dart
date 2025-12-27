@@ -14,6 +14,8 @@ class DrinkSelectionPage extends StatefulWidget {
   final int dailyGoal;
   final Map<String, dynamic> initialSelectedDrink;
   final Function(int) onDrinkAdded;
+  final Function(Map<String, dynamic>) onDrinkSelected;
+  final VoidCallback onClose;
 
   const DrinkSelectionPage({
     super.key,
@@ -21,6 +23,8 @@ class DrinkSelectionPage extends StatefulWidget {
     required this.dailyGoal,
     required this.initialSelectedDrink,
     required this.onDrinkAdded,
+    required this.onDrinkSelected,
+    required this.onClose,
   });
 
   @override
@@ -87,7 +91,7 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildCircularButton(context, Icons.chevron_left, () => Navigator.pop(context, _selectedDrink)),
+                      _buildCircularButton(context, Icons.chevron_left, widget.onClose),
                       Text(
                         "Select Drink",
                         style: textTheme.titleLarge?.copyWith(
@@ -322,6 +326,7 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
         setState(() {
           _selectedDrink = drink;
         });
+        widget.onDrinkSelected(drink);
       },
       child: Container(
         decoration: BoxDecoration(

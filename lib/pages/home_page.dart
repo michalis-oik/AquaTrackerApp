@@ -5,32 +5,29 @@ import 'package:water_tracking_app/utils/calendarDayBox.dart';
 import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:water_tracking_app/utils/hydrationStatsChart.dart';
-import 'package:water_tracking_app/pages/drink_selection_page.dart';
-
-extension ColorValues on Color {
-  Color withValues({double? opacity}) {
-    if (opacity == null) return this;
-    // We convert the double (0.0 to 1.0) to an integer alpha value (0 to 255) internally.
-    return withAlpha((opacity * 255).round().clamp(0, 255));
-  }
-}
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int currentIntake;
+  final int dailyGoal;
+  final Map<String, dynamic> selectedDrink;
+  final VoidCallback onAddWater;
+  final VoidCallback onSelectDrinkTap;
+
+  const HomePage({
+    super.key,
+    required this.currentIntake,
+    required this.dailyGoal,
+    required this.selectedDrink,
+    required this.onAddWater,
+    required this.onSelectDrinkTap,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  // State management variables
-  int _currentWaterIntake = 0;
-  final int _dailyGoal = 2210;
-
-  Map<String, dynamic> _selectedDrink = {'name': 'Water', 'icon': Icons.water_drop, 'color': Colors.blue, 'defaultAmount': 250};
-  
   List<double> myHydrationWeeklyData = [55, 38, 70, 48, 48, 70, 75];
-
   List<Map<String, String>> _weekDays = [];
   int _selectedIndex = 0;
   int _currentDayIndex = 0;
@@ -56,18 +53,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _addWater() {
-    setState(() {
-      _currentWaterIntake += 250;
-    });
-  }
-  
   Widget _buildWaterTrackerCardContent(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
     
-    final double percentageOfGoal = (_currentWaterIntake / _dailyGoal) * 100;
+    final double percentageOfGoal = (widget.currentIntake / widget.dailyGoal) * 100;
     final double percentageDifference = percentageOfGoal - 100;
     
     final String sign = percentageDifference >= 0 ? '+' : '';
@@ -75,7 +66,7 @@ class _HomePageState extends State<HomePage> {
     
     final Color goalStatusColor = percentageDifference >= 0 
         ? Colors.green.shade400 
-        : colorScheme.onSurface.withValues(alpha: 0.8);
+        : colorScheme.onSurface.withAlpha(204);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,9 +104,9 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                 decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.15),
+                  color: colorScheme.surface.withAlpha(38),
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: colorScheme.surface.withValues(alpha: 0.2)),
+                  border: Border.all(color: colorScheme.surface.withAlpha(51)),
                 ),
                 child: Column(
                   children: [
@@ -124,7 +115,7 @@ class _HomePageState extends State<HomePage> {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        "${_currentWaterIntake}ml",
+                        "${widget.currentIntake}ml",
                         style: textTheme.titleLarge?.copyWith(
                           color: colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
@@ -135,7 +126,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       "Total Drunk",
                       style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: colorScheme.onSurface.withAlpha(179),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -149,9 +140,9 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                 decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.15),
+                  color: colorScheme.surface.withAlpha(38),
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: colorScheme.surface.withValues(alpha: 0.2)),
+                  border: Border.all(color: colorScheme.surface.withAlpha(51)),
                 ),
                 child: Column(
                   children: [
@@ -171,7 +162,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       "Goal Progress",
                       style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: colorScheme.onSurface.withAlpha(179),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -185,6 +176,7 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
   Widget _buildDailyGoalCardContent(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
@@ -204,25 +196,23 @@ class _HomePageState extends State<HomePage> {
               Text(
                 "Stay hydrated, stay healthy!",
                 style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.7)
+                  color: colorScheme.onSurface.withAlpha(179)
                 ),
               ),
               const SizedBox(height: 40),
 
               Row(
                 children: [
-                  // Elevated Button with shadow
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        // The borderRadius here MUST MATCH the button's borderRadius
                         borderRadius: BorderRadius.circular(20), 
                         boxShadow: [
                           BoxShadow(
-                            color: colorScheme.primary.withValues(alpha: 0.5), // Glow color
+                            color: colorScheme.primary.withAlpha(128),
                             spreadRadius: 2,
                             blurRadius: 15,
-                            offset: const Offset(-2, 5), // changes position of shadow
+                            offset: const Offset(-2, 5),
                           ),
                         ],
                       ),
@@ -230,45 +220,33 @@ class _HomePageState extends State<HomePage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colorScheme.primary,
                           foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           elevation: 0, 
                           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                         ),
                         child: Text(
-                          "Drink ${_selectedDrink['name']}\n(${_selectedDrink['defaultAmount']}ml)",
+                          "Drink ${widget.selectedDrink['name']}\n(${widget.selectedDrink['defaultAmount']}ml)",
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _currentWaterIntake += (_selectedDrink['defaultAmount'] as int);
-                          });
-                        },
+                        onPressed: widget.onAddWater,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  
-                  // Use a SizedBox to give the Stack a predictable size, 
-                  // making it easier to position the small icon.
                   SizedBox(
-                    width: 40,  // Adjust size as needed
-                    height: 40, // Must be the same as width for a circle
+                    width: 40,
+                    height: 40,
                     child: Stack(
-                      // This allows the small icon to "poke out" without being cut off.
                       clipBehavior: Clip.none, 
                       children: [
-                        // --- 1. Your Main Circular Button (the bottom layer) ---
-                        // This is the same code you had, now as the first child of the Stack.
                         Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: colorScheme.primary.withValues(alpha: 0.5),
+                                color: colorScheme.primary.withAlpha(128),
                                 spreadRadius: 2,
                                 blurRadius: 15,
                                 offset: const Offset(2, 5),
@@ -280,76 +258,39 @@ class _HomePageState extends State<HomePage> {
                               backgroundColor: colorScheme.primary,
                               foregroundColor: colorScheme.onPrimary,
                               shape: const CircleBorder(),
-                              padding: const EdgeInsets.all(4), // Increased padding for a better look
+                              padding: const EdgeInsets.all(4),
                               elevation: 0,
                             ),
-                            child: _selectedDrink['name'] == 'Water'
+                            child: widget.selectedDrink['name'] == 'Water'
                                 ? Image.asset(
                                     'assets/icons/glass-waterIcon.png',
-                                    color: colorScheme.onPrimary, // Match the foregroundColor
+                                    color: colorScheme.onPrimary,
                                     width: 20,
                                     height: 20,
                                   )
                                 : Icon(
-                                    _selectedDrink['icon'],
+                                    widget.selectedDrink['icon'],
                                     color: colorScheme.onPrimary,
                                     size: 20,
                                   ),
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DrinkSelectionPage(
-                                  initialIntake: _currentWaterIntake,
-                                  dailyGoal: _dailyGoal,
-                                  initialSelectedDrink: _selectedDrink,
-                                  onDrinkAdded: (amount) {
-                                    setState(() {
-                                      _currentWaterIntake += amount;
-                                    });
-                                  },
-                                ),
-                              ),
-                            );
-
-                            if (result != null) {
-                              setState(() {
-                                _selectedDrink = result;
-                              });
-                            }
-                            },
+                            onPressed: widget.onSelectDrinkTap,
                           ),
                         ),
-
-                        // --- 2. The Small "Repick" Icon (the top layer) ---
                         Positioned(
-                          right: -3,  // Position it 0 pixels from the right edge of the Stack
-                          bottom: 3, // Position it 0 pixels from the bottom edge of the Stack
+                          right: -3,
+                          bottom: 3,
                           child: IgnorePointer(
                             child: Container(
-                              padding: const EdgeInsets.all(2), // Space around the inner icon
+                              padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: colorScheme.secondary, // A contrasting color
-                                // Optional: Add a small border to make it pop
+                                color: colorScheme.secondary,
                                 border: Border.all(color: colorScheme.primary, width: 1),
                               ),
                               child: Icon(
                                 Icons.swap_horiz,
                                 color: colorScheme.primary,
                                 size: 7,
-                                // --- ADD THIS SHADOWS PROPERTY ---
-                                shadows: [
-                                  Shadow(
-                                    color: colorScheme.primary, // The same color as the icon
-                                    blurRadius: 0.5,           // A very small blur radius
-                                  ),
-                                  // You can even add a second layer for more "boldness"
-                                  Shadow(
-                                    color: colorScheme.primary,
-                                    blurRadius: 1.0,
-                                  ),
-                                ],
                               ),
                             ),
                           ),
@@ -362,41 +303,30 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        // Text(
-        //   "${_dailyGoal}ml",
-        //   style: textTheme.headlineSmall?.copyWith(
-        //     color: colorScheme.primary,
-        //     fontWeight: FontWeight.bold
-        //   ),
-        // ),
         CircularPercentIndicator(
           radius: 55.0,
           lineWidth: 10.0,
-          // percent should be between 0.0 and 1.0 and I want it to see from currentintake to dailygoal. if current intake is > daily goal then put 1.0
-          percent:(_currentWaterIntake / _dailyGoal).clamp(0.0, 1.0), // value between 0.0 and 1.0
+          percent: (widget.currentIntake / widget.dailyGoal).clamp(0.0, 1.0),
           animation: true,
           animationDuration: 80,
           circularStrokeCap: CircularStrokeCap.round,
-          backgroundColor: colorScheme.primary.withValues(alpha: 0.3),
+          backgroundColor: colorScheme.primary.withAlpha(77),
           progressColor: colorScheme.primary,
           center: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "${_dailyGoal}ml",
-                style: TextStyle(
+                "${widget.dailyGoal}ml",
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                "${(_dailyGoal - _currentWaterIntake).clamp(0, double.infinity).toStringAsFixed(0)}ml",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                "${(widget.dailyGoal - widget.currentIntake).clamp(0, double.infinity).toStringAsFixed(0)}ml",
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -407,9 +337,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme colorScheme = theme.colorScheme;
-    final TextTheme textTheme = theme.textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -418,10 +347,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  colorScheme.primary.withValues(alpha: 0.7),
-                  colorScheme.surface,
-                ],
+                colors: [colorScheme.primary.withAlpha(179), colorScheme.surface],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -433,7 +359,6 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Static Top Row (remains the same)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -448,19 +373,8 @@ class _HomePageState extends State<HomePage> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "Hello",
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                ),
-                              ),
-                              Text(
-                                "John Doe",
-                                style: textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
+                              Text("Hello", style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withAlpha(179))),
+                              Text("John Doe", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
                             ],
                           ),
                         ],
@@ -473,20 +387,13 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   const SizedBox(height: 40),
-
-                  // Scrollable Content Area
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          GlassmorphismCard(
-                            child: _buildWaterTrackerCardContent(context),
-                          ),
+                          GlassmorphismCard(child: _buildWaterTrackerCardContent(context)),
                           const SizedBox(height: 20),
-
-                          GlassmorphismCard(
-                            child: _buildDailyGoalCardContent(context),
-                          ),
+                          GlassmorphismCard(child: _buildDailyGoalCardContent(context)),
                           const SizedBox(height: 20),
                           HydrationStatsChart(weeklyData: myHydrationWeeklyData),
                           const SizedBox(height: 20),

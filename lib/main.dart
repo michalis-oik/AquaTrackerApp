@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:water_tracking_app/pages/home_page.dart';
+import 'package:water_tracking_app/pages/main_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Aqua Tracking App',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // Use colorScheme for modern Flutter theming
         colorScheme: ColorScheme.fromSeed(
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         // This makes sure other UI elements follow the theme
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const MainScreen(),
     );
   }
 }
