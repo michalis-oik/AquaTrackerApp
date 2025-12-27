@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:water_tracking_app/pages/home_page.dart';
 import 'package:water_tracking_app/pages/drink_selection_page.dart';
+import 'package:water_tracking_app/pages/reminders_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -89,7 +90,10 @@ class _MainScreenState extends State<MainScreen> {
           onSelectDrinkTap: _toggleDrinkSelection,
         );
       case 1:
-        return const Center(child: Text("Alarm Page"));
+        return RemindersPage(
+          currentIntake: _currentWaterIntake,
+          dailyGoal: _dailyGoal,
+        );
       case 3:
         return const Center(child: Text("Statistics Page"));
       case 4:
