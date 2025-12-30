@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:water_tracking_app/pages/home_page.dart';
 import 'package:water_tracking_app/pages/drink_selection_page.dart';
 import 'package:water_tracking_app/pages/reminders_page.dart';
+import 'package:water_tracking_app/pages/leaderboard_page.dart';
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -113,7 +115,10 @@ class _MainScreenState extends State<MainScreen> {
         );
         break;
       case 3:
-        page = const Center(key: ValueKey('stats_page'), child: Text("Statistics Page"));
+        page = LeaderboardPage(
+          key: const ValueKey('leaderboard_page'),
+          myIntake: _currentWaterIntake,
+        );
         break;
       case 4:
         page = const Center(key: ValueKey('settings_page'), child: Text("Settings Page"));
@@ -157,7 +162,7 @@ class _MainScreenState extends State<MainScreen> {
           _buildNavItem(0, Icons.home_rounded, "Home"),
           _buildNavItem(1, Icons.alarm_rounded, "Alarm"),
           _buildCenterActionItem(),
-          _buildNavItem(3, Icons.pie_chart_rounded, "Statistics"),
+          _buildNavItem(3, Icons.emoji_events_rounded, "Leaderboard"),
           _buildNavItem(4, Icons.settings_rounded, "Settings"),
         ],
       ),
