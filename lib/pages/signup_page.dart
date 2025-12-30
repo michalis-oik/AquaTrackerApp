@@ -24,24 +24,23 @@ class _SignupPageState extends State<SignupPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        // Create user in Firebase
+        // 1. Create user in Firebase
         UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
 
-        // Update display name
+        // 2. Update display name
         await userCredential.user?.updateDisplayName(_nameController.text.trim());
 
+        // 3. Send Email Verification
+        await userCredential.user?.sendEmailVerification();
+
+        // 4. Sign out immediately so they have to login after verifying
+        await _auth.signOut();
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created successfully! Welcome to SipQuest.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate to home after successful signup
-          Navigator.pushReplacementNamed(context, '/home');
+          _showVerificationDialog();
         }
       } on FirebaseAuthException catch (e) {
         if (mounted) {
@@ -67,6 +66,37 @@ class _SignupPageState extends State<SignupPage> {
         if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showVerificationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.email_outlined, color: Color(0xFF928FFF)),
+            SizedBox(width: 10),
+            Text('Verify Email'),
+          ],
+        ),
+        content: Text(
+          'A verification link has been sent to ${_emailController.text.trim()}. '
+          'Please verify your email before logging in.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to login page
+            },
+            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

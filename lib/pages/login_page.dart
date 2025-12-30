@@ -39,10 +39,20 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        await _auth.signInWithEmailAndPassword(
+        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+
+        // Check if email is verified
+        if (userCredential.user != null && !userCredential.user!.emailVerified) {
+          await _auth.signOut();
+          if (mounted) {
+            _showEmailVerificationPrompt(userCredential.user!);
+          }
+          return;
+        }
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/home');
         }
@@ -56,6 +66,36 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showEmailVerificationPrompt(User user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Verify your email'),
+        content: const Text(
+          'Your email address is not verified yet. Please check your inbox and click the verification link.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await user.sendEmailVerification();
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Verification email resent!')),
+                );
+              }
+            },
+            child: const Text('Resend Email'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Dismiss'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -74,8 +114,6 @@ class _LoginPageState extends State<LoginPage> {
       final String? idToken = googleAuth.idToken;
 
       // 3. Get the accessToken from 'authorizationClient'
-      // We pass an empty list of scopes if we just need the basic token, 
-      // or we can explicitly pass ['email', 'profile'].
       final GoogleSignInClientAuthorization? clientAuth = 
           await googleUser.authorizationClient.authorizationForScopes(['email', 'profile']); 
       
