@@ -3,6 +3,8 @@ import 'package:water_tracking_app/pages/home_page.dart';
 import 'package:water_tracking_app/pages/drink_selection_page.dart';
 import 'package:water_tracking_app/pages/reminders_page.dart';
 import 'package:water_tracking_app/pages/leaderboard_page.dart';
+import 'package:water_tracking_app/pages/settings_page.dart';
+
 
 
 class MainScreen extends StatefulWidget {
@@ -121,7 +123,10 @@ class _MainScreenState extends State<MainScreen> {
         );
         break;
       case 4:
-        page = const Center(key: ValueKey('settings_page'), child: Text("Settings Page"));
+        page = SettingsPage(
+          key: const ValueKey('settings_page'),
+          currentGoal: _dailyGoal,
+        );
         break;
       default:
         page = Container(key: const ValueKey('empty_page'));
