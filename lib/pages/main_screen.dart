@@ -16,6 +16,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  int _previousIndex = 0;
   bool _isDrinkSelectionOpen = false;
   
   // Shared state for the app
@@ -45,11 +46,13 @@ class _MainScreenState extends State<MainScreen> {
 
   void _toggleDrinkSelection() {
     setState(() {
-      _isDrinkSelectionOpen = !_isDrinkSelectionOpen;
-      if (_isDrinkSelectionOpen) {
+      if (!_isDrinkSelectionOpen) {
+        _previousIndex = _selectedIndex;
+        _isDrinkSelectionOpen = true;
         _selectedIndex = 2;
       } else {
-        _selectedIndex = 0;
+        _isDrinkSelectionOpen = false;
+        _selectedIndex = _previousIndex;
       }
     });
   }
@@ -174,7 +177,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = (_selectedIndex == index && !_isDrinkSelectionOpen) || (index == 0 && _isDrinkSelectionOpen);
+    final isSelected = _selectedIndex == index && !_isDrinkSelectionOpen;
     final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
@@ -202,33 +205,44 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildCenterActionItem() {
+    final bool isActive = _isDrinkSelectionOpen;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: _toggleDrinkSelection,
       child: Center(
-        child: Transform.rotate(
-          angle: 0.785398, // 45 degrees
-          child: Container(
-            width: 55,
-            height: 55,
-            decoration: BoxDecoration(
-              color: const Color(0xFF928FFF),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF928FFF).withAlpha(120),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Transform.rotate(
-                angle: -0.785398,
-                child: const Icon(
-                  Icons.water_drop,
-                  color: Colors.white,
-                  size: 30,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: isActive ? (Matrix4.identity()..scale(1.1)) : Matrix4.identity(),
+          transformAlignment: Alignment.center,
+          child: Transform.rotate(
+            angle: 0.785398, // 45 degrees
+            child: Container(
+              width: 55,
+              height: 55,
+              decoration: BoxDecoration(
+                color: isActive ? colorScheme.primary : const Color(0xFF928FFF),
+                borderRadius: BorderRadius.circular(16),
+                border: isActive 
+                    ? Border.all(color: Colors.white, width: 2) 
+                    : Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isActive ? colorScheme.primary : const Color(0xFF928FFF)).withAlpha(isActive ? 160 : 120),
+                    blurRadius: isActive ? 20 : 15,
+                    spreadRadius: isActive ? 4 : 2,
+                    offset: isActive ? const Offset(0, 0) : const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Transform.rotate(
+                  angle: -0.785398,
+                  child: Icon(
+                    Icons.water_drop,
+                    color: Colors.white,
+                    size: isActive ? 34 : 30,
+                  ),
                 ),
               ),
             ),
