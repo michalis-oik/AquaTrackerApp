@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,37 +17,111 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      // Simulate Firebase Auth
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      });
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // google_sign_in 7.0.0+ uses a singleton instance
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeGoogleSignIn();
+  }
+
+  Future<void> _initializeGoogleSignIn() async {
+    try {
+      await _googleSignIn.initialize();
+    } catch (e) {
+      debugPrint('GoogleSignIn initialization error: $e');
     }
   }
 
-  void _handleGoogleSignIn() {
-    setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Navigator.pushReplacementNamed(context, '/home');
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      try {
+        await _auth.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } on FirebaseAuthException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? 'Login failed')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-    });
+    }
   }
 
-  void _handleAnonymousSignIn() {
+  Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
+    try {
+      // In google_sign_in 7.0.0+, authenticate() returns a GoogleSignInAccount
+      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+      
+      if (googleUser == null) {
         setState(() => _isLoading = false);
+        return;
+      }
+
+      // 2. Get the idToken from 'authentication'
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      // 3. Get the accessToken from 'authorizationClient'
+      // We pass an empty list of scopes if we just need the basic token, 
+      // or we can explicitly pass ['email', 'profile'].
+      final GoogleSignInClientAuthorization? clientAuth = 
+          await googleUser.authorizationClient.authorizationForScopes(['email', 'profile']); 
+      
+      if (clientAuth == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final String? accessToken = clientAuth.accessToken;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: accessToken,
+        idToken: idToken,
+      );
+
+      await _auth.signInWithCredential(credential);
+      if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google Sign-In failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleAnonymousSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await _auth.signInAnonymously();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Anonymous Sign-In failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -165,7 +241,11 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 onPressed: _isLoading ? null : _handleLogin,
                                 child: _isLoading 
-                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
                                   : const Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                               ),
                             ),
@@ -192,13 +272,13 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildSocialButton(
-                          onTap: _handleGoogleSignIn,
+                          onTap: _isLoading ? () {} : _handleGoogleSignIn,
                           icon: 'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
                           label: 'Google',
                         ),
                         _buildSocialButton(
-                          onTap: _handleAnonymousSignIn,
-                          icon: '', // Using IconData for guest
+                          onTap: _isLoading ? () {} : _handleAnonymousSignIn,
+                          icon: '', 
                           isGuest: true,
                           label: 'Guest',
                         ),

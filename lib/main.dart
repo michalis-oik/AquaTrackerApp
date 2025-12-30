@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:water_tracking_app/pages/main_screen.dart';
 import 'package:water_tracking_app/pages/login_page.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase (Ensure you have firebase_options.dart if using FlutterFire CLI)
+  await Firebase.initializeApp();
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
@@ -29,7 +33,6 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFD5D4FF),
         useMaterial3: true,
       ),
-      // Use routes for easier navigation switching
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
