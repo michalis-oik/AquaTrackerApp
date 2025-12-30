@@ -291,7 +291,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const Text("Don't have an account?", style: TextStyle(color: Colors.white)),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => Navigator.pushNamed(context, '/signup'),
                           child: const Text('Sign Up', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                         ),
                       ],
