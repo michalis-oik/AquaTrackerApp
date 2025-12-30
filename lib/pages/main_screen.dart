@@ -57,21 +57,34 @@ class _MainScreenState extends State<MainScreen> {
       body: Stack(
         children: [
           _buildBody(),
-          if (_isDrinkSelectionOpen)
-            Positioned.fill(
-              child: DrinkSelectionPage(
-              initialIntake: _currentWaterIntake,
-              dailyGoal: _dailyGoal,
-              initialSelectedDrink: _selectedDrink,
-              onDrinkAdded: _addWater,
-              onDrinkSelected: (drink) {
-                setState(() {
-                  _selectedDrink = drink;
-                });
+          Positioned.fill(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
               },
-              onClose: _toggleDrinkSelection,
+              child: _isDrinkSelectionOpen
+                  ? DrinkSelectionPage(
+                      key: const ValueKey('drink_selection'),
+                      initialIntake: _currentWaterIntake,
+                      dailyGoal: _dailyGoal,
+                      initialSelectedDrink: _selectedDrink,
+                      onDrinkAdded: _addWater,
+                      onDrinkSelected: (drink) {
+                        setState(() {
+                          _selectedDrink = drink;
+                        });
+                      },
+                      onClose: _toggleDrinkSelection,
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no_drink_selection')),
             ),
-            ),
+          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(context),
@@ -79,28 +92,46 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildBody() {
+    Widget page;
     switch (_selectedIndex) {
       case 0:
       case 2: // Keep Home as background for index 2 if using overlay
-        return HomePage(
+        page = HomePage(
+          key: const ValueKey('home_page'),
           currentIntake: _currentWaterIntake,
           dailyGoal: _dailyGoal,
           selectedDrink: _selectedDrink,
           onAddWater: () => _addWater(_selectedDrink['defaultAmount'] as int),
           onSelectDrinkTap: _toggleDrinkSelection,
         );
+        break;
       case 1:
-        return RemindersPage(
+        page = RemindersPage(
+          key: const ValueKey('reminders_page'),
           currentIntake: _currentWaterIntake,
           dailyGoal: _dailyGoal,
         );
+        break;
       case 3:
-        return const Center(child: Text("Statistics Page"));
+        page = const Center(key: ValueKey('stats_page'), child: Text("Statistics Page"));
+        break;
       case 4:
-        return const Center(child: Text("Settings Page"));
+        page = const Center(key: ValueKey('settings_page'), child: Text("Settings Page"));
+        break;
       default:
-        return Container();
+        page = Container(key: const ValueKey('empty_page'));
     }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+      child: page,
+    );
   }
 
   Widget _buildBottomNavBar(BuildContext context) {

@@ -307,7 +307,7 @@ class _HomePageState extends State<HomePage> {
           lineWidth: 10.0,
           percent: (widget.currentIntake / widget.dailyGoal).clamp(0.0, 1.0),
           animation: true,
-          animationDuration: 80,
+          animationDuration: 600,
           circularStrokeCap: CircularStrokeCap.round,
           backgroundColor: colorScheme.primary.withAlpha(77),
           progressColor: colorScheme.primary,
