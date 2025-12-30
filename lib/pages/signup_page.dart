@@ -234,15 +234,39 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Already have an account?", style: TextStyle(color: Colors.white)),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Login', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                        Text(
+                          "Already have an account?",
+                          style: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.8)),
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

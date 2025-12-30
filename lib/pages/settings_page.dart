@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
 
   late double _goalValue;
+  final User? _user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -100,7 +102,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.logout_rounded,
                     title: 'Logout',
                     titleColor: Colors.redAccent,
-                    onTap: () {},
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        Navigator.of(context, rootNavigator: true).pushReplacementNamed('/');
+                      }
+                    },
                   ),
 
                   const SizedBox(height: 100), // Space for bottom nav
@@ -142,8 +149,10 @@ class _SettingsPageState extends State<SettingsPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: colorScheme.primary, width: 2),
-              image: const DecorationImage(
-                image: NetworkImage('https://api.dicebear.com/7.x/avataaars/svg?seed=John'),
+              image: DecorationImage(
+                image: _user?.photoURL != null 
+                    ? NetworkImage(_user!.photoURL!) 
+                    : const NetworkImage('https://api.dicebear.com/7.x/avataaars/svg?seed=User'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -153,16 +162,16 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'John Doe',
-                  style: TextStyle(
+                Text(
+                  _user?.displayName ?? 'User',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2D3142),
                   ),
                 ),
                 Text(
-                  'john.doe@example.com',
+                  _user?.email ?? 'anonymous',
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 14,

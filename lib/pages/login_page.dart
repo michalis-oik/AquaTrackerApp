@@ -209,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'SipQuest',
                       style: textTheme.headlineLarge?.copyWith(
-                        color: Colors.white,
+                        color: const Color(0xFF2D3142),
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
                       ),
@@ -217,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'Your hydration journey begins here',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: const Color(0xFF2D3142).withOpacity(0.7),
                         fontSize: 14,
                       ),
                     ),
@@ -266,7 +266,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
                             SizedBox(
                               width: double.infinity,
                               height: 55,
@@ -291,19 +291,18 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 15),
                     Row(
                       children: [
-                        Expanded(child: Divider(color: Colors.white.withOpacity(0.5))),
+                        Expanded(child: Divider(color: const Color(0xFF2D3142).withOpacity(0.2))),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
-                          child: Text('OR', style: TextStyle(color: Colors.white.withOpacity(0.8))),
+                          child: Text('OR', style: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6))),
                         ),
-                        Expanded(child: Divider(color: Colors.white.withOpacity(0.5))),
+                        Expanded(child: Divider(color: const Color(0xFF2D3142).withOpacity(0.2))),
                       ],
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 15),
 
                     // Social Login Buttons
                     Row(
@@ -323,17 +322,43 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 25),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Don't have an account?", style: TextStyle(color: Colors.white)),
-                        TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/signup'),
-                          child: const Text('Sign Up', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                        Text(
+                          "Don't have an account?",
+                          style: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.8)),
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () => Navigator.pushNamed(context, '/signup'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
