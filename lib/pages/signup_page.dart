@@ -173,6 +173,7 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       child: Form(
                         key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         child: Column(
                           children: [
                             _buildTextField(
@@ -293,7 +294,11 @@ class _SignupPageState extends State<SignupPage> {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xFF928FFF)),
+        prefixIconColor: WidgetStateColor.resolveWith((states) {
+          if (states.contains(WidgetState.error)) return Colors.red;
+          return const Color(0xFF928FFF);
+        }),
+        prefixIcon: Icon(icon),
         suffixIcon: isPassword 
           ? IconButton(
               icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),

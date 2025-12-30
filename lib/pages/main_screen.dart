@@ -162,13 +162,12 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(0, Icons.home_rounded, "Home"),
-          _buildNavItem(1, Icons.alarm_rounded, "Alarm"),
-          _buildCenterActionItem(),
-          _buildNavItem(3, Icons.emoji_events_rounded, "Leaderboard"),
-          _buildNavItem(4, Icons.settings_rounded, "Settings"),
+          Expanded(child: _buildNavItem(0, Icons.home_rounded, "Home")),
+          Expanded(child: _buildNavItem(1, Icons.alarm_rounded, "Reminders")),
+          Expanded(child: _buildCenterActionItem()),
+          Expanded(child: _buildNavItem(3, Icons.emoji_events_rounded, "Ranking")),
+          Expanded(child: _buildNavItem(4, Icons.settings_rounded, "Settings")),
         ],
       ),
     );
@@ -203,31 +202,35 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildCenterActionItem() {
-    final isSelected = _isDrinkSelectionOpen;
     return GestureDetector(
       onTap: _toggleDrinkSelection,
-      child: Transform.rotate(
-        angle: 0.785398, // 45 degrees
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: const Color(0xFF928FFF),
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF928FFF).withAlpha(102),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+      child: Center(
+        child: Transform.rotate(
+          angle: 0.785398, // 45 degrees
+          child: Container(
+            width: 55,
+            height: 55,
+            decoration: BoxDecoration(
+              color: const Color(0xFF928FFF),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF928FFF).withAlpha(120),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Transform.rotate(
+                angle: -0.785398,
+                child: const Icon(
+                  Icons.water_drop,
+                  color: Colors.white,
+                  size: 30,
+                ),
               ),
-            ],
-          ),
-          child: Transform.rotate(
-            angle: -0.785398,
-            child: const Icon(
-              Icons.water_drop,
-              color: Colors.white,
-              size: 28,
             ),
           ),
         ),
