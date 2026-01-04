@@ -248,7 +248,23 @@ class DatabaseService {
     }
   }
 
-  // Stream groups the user is in (simplified to prevent hangs)
+  // Stream groups the user is in (reactive to group changes)
+  Stream<List<Map<String, dynamic>>> getGroupsSnapshotStream() {
+    if (uid == null) return Stream.value([]);
+    return _db
+        .collection('groups')
+        .where('members', arrayContains: uid)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        var data = Map<String, dynamic>.from(doc.data());
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  // Stream user document to get the list of group IDs (kept for backward compatibility if needed)
   Stream<DocumentSnapshot> getUserGroupsStream() {
     if (uid == null) return const Stream.empty();
     return _db.collection('users').doc(uid).snapshots();

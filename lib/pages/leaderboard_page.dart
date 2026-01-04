@@ -39,17 +39,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   void _setupGroupsListener() {
-    _groupsSubscription = _db.getUserGroupsStream().listen((userDoc) async {
+    _groupsSubscription = _db.getGroupsSnapshotStream().listen((groups) {
       try {
         if (!mounted) return;
         
-        List groupIds = [];
-        if (userDoc.exists && userDoc.data() != null) {
-          final data = userDoc.data() as Map<String, dynamic>;
-          groupIds = data['groups'] as List? ?? [];
-        }
-
-        if (groupIds.isEmpty) {
+        if (groups.isEmpty) {
           if (mounted) {
             setState(() {
               _userGroups = [];
@@ -60,18 +54,15 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           return;
         }
 
-        // Fetch details outside of the stream generator to prevent hangs
-        final details = await _db.getGroupsDetails(groupIds);
-        
-        if (!mounted) return;
-
-        setState(() {
-          _userGroups = details;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _userGroups = groups;
+            _isLoading = false;
+          });
+        }
 
         // Sync subscriptions
-        _syncSubSubscriptions(details);
+        _syncSubSubscriptions(groups);
       } catch (e) {
         debugPrint("Error in group listener: $e");
         if (mounted) setState(() => _isLoading = false);
@@ -539,9 +530,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: TabBar(
                               isScrollable: true,
+                              tabAlignment: TabAlignment.start,
                               labelColor: colorScheme.primary,
                               unselectedLabelColor: colorScheme.onSurface.withOpacity(0.4),
                               indicatorColor: colorScheme.primary,
@@ -606,13 +598,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         'avatar': m['profileIcon'] ?? '👤',
         'isMe': uid == _db.uid,
         'isAdmin': isMemberAdmin,
+        'personalGoal': m['dailyGoal'] ?? 2500,
       };
     }).toList();
 
     memberSlots.sort((a, b) => (b['intake'] as int).compareTo(a['intake'] as int));
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [
         const SizedBox(height: 10),
         _buildGroupGoalCard(group, currentTotal, goal, progress),
@@ -655,9 +648,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         ...memberSlots.asMap().entries.map((entry) {
           final index = entry.key;
           final member = entry.value;
-          int groupGoal = group['dailyGoal'] ?? 2500;
-          if (groupGoal <= 0) groupGoal = 2500;
-          int percentage = ((member['intake'] as int) / groupGoal * 100).toInt();
+          int personalGoal = member['personalGoal'] ?? 2500;
+          if (personalGoal <= 0) personalGoal = 2500;
+          int percentage = ((member['intake'] as int) / personalGoal * 100).toInt();
           return _buildMemberTile(member, index + 1, percentage);
         }),
         const SizedBox(height: 120),
@@ -721,7 +714,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 duration: const Duration(milliseconds: 1000),
                 curve: Curves.easeOutCubic,
                 height: 12,
-                width: (MediaQuery.of(context).size.width - 84) * progress,
+                width: (MediaQuery.of(context).size.width - 68) * progress,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.6)]),
                   borderRadius: BorderRadius.circular(10),
@@ -763,8 +756,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     final color = rank == 1 
         ? const Color(0xFFFFD700) // Gold
         : (rank == 2 
-            ? const Color(0xFFA0A0A0) // Distinct Silver
-            : const Color(0xFFB87333)); // Copper/Bronze
+            ? const Color(0xFF9CA3AF) // Darker Silver (more visible)
+            : const Color(0xFFCD7F32)); // Bronze
     return Column(
       children: [
         Container(
@@ -772,11 +765,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           height: 70,
           margin: const EdgeInsets.only(bottom: 15),
           decoration: BoxDecoration(
+            color: const Color(0xFFF5F5F0), // Soft cream/off-white
             shape: BoxShape.circle,
-            border: Border.all(color: color.withOpacity(0.3), width: 3, style: BorderStyle.solid),
+            border: Border.all(color: color.withOpacity(0.4), width: 3),
           ),
           child: Center(
-            child: Icon(Icons.person_outline, color: color.withOpacity(0.3), size: 30),
+            child: Icon(Icons.person_outline, color: color.withOpacity(0.4), size: 30),
           ),
         ),
         const SizedBox(height: 12),
@@ -786,9 +780,15 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           width: 60,
           height: height,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15), // Increased opacity for better visibility
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.3),
+                color.withOpacity(0.05),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            border: Border.all(color: color.withOpacity(0.2), width: 1),
           ),
         ),
       ],
@@ -796,7 +796,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Widget _buildPodiumItem(Map<String, dynamic> member, int rank, double height) {
-    final color = rank == 1 ? const Color(0xFFFFD700) : (rank == 2 ? const Color(0xFFC4C4C4) : const Color(0xFFCD7F32));
+    final color = rank == 1 
+        ? const Color(0xFFFFD700) // Gold
+        : (rank == 2 
+            ? const Color(0xFF9CA3AF) // Darker Silver (more visible)
+            : const Color(0xFFCD7F32)); // Bronze
     
     return Column(
       children: [
@@ -808,7 +812,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               width: 75,
               height: 75,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFFF5F5F0), // Soft cream/off-white instead of pure white
                 shape: BoxShape.circle,
                 border: Border.all(color: color, width: 3),
                 boxShadow: [
@@ -826,6 +830,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 decoration: BoxDecoration(
                   color: color,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Text('Rank $rank', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
               ),
@@ -841,7 +852,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           height: height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color.withOpacity(0.6), color.withOpacity(0.1)], 
+              colors: [
+                color.withOpacity(0.5),
+                color.withOpacity(0.05),
+              ], 
               begin: Alignment.topCenter, 
               end: Alignment.bottomCenter
             ),
@@ -894,9 +908,21 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 ),
                 Row(
                   children: [
-                    Icon(Icons.water_drop, size: 12, color: colorScheme.primary),
+                    Icon(
+                      percentage >= 100 ? Icons.check_circle : Icons.water_drop,
+                      size: 12,
+                      color: percentage >= 100 ? const Color(0xFF4CAF50) : Colors.orange,
+                    ),
                     const SizedBox(width: 4),
-                    Text('Hydrated', style: TextStyle(color: colorScheme.onSurface.withAlpha(102), fontSize: 13)),
+                    Text(
+                      percentage >= 100 ? 'Hydrated' : 'In Progress',
+                      style: TextStyle(
+                        color: percentage >= 100 
+                          ? const Color(0xFF4CAF50) 
+                          : Colors.orange.shade700,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                 ),
               ],
