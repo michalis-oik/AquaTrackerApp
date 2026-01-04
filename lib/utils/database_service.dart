@@ -59,4 +59,18 @@ class DatabaseService {
     }
     return weeklyData;
   }
+
+  // Update user's daily goal
+  Future<void> updateDailyGoal(int newGoal) async {
+    if (uid == null) return;
+    await _db.collection('users').doc(uid).set({
+      'dailyGoal': newGoal,
+      'lastSettingsUpdate': DateTime.now().toIso8601String(),
+    }, SetOptions(merge: true));
+  }
+
+  // Stream user settings (goal)
+  Stream<DocumentSnapshot> getUserSettingsStream() {
+    return _db.collection('users').doc(uid).snapshots();
+  }
 }

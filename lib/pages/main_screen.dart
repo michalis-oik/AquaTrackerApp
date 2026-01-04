@@ -25,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _isDrinkSelectionOpen = false;
   
   // Shared state for the app
-  final int _dailyGoal = 2210;
+  int _dailyGoal = 2210; // Default, will be updated from Firebase
   Map<String, dynamic> _selectedDrink = {
     'name': 'Water', 
     'icon': Icons.water_drop, 
@@ -39,6 +39,7 @@ class _MainScreenState extends State<MainScreen> {
   List<double> _weeklyIntakeData = [0, 0, 0, 0, 0, 0, 0];
   StreamSubscription? _todaySubscription;
   StreamSubscription? _historySubscription;
+  StreamSubscription? _goalSubscription;
 
   final DatabaseService _databaseService = DatabaseService();
 
@@ -47,6 +48,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _setupTodayListener();
     _setupHistoryListener(_selectedDate);
+    _setupGoalListener();
     _loadWeeklyData();
   }
 
@@ -54,7 +56,22 @@ class _MainScreenState extends State<MainScreen> {
   void dispose() {
     _todaySubscription?.cancel();
     _historySubscription?.cancel();
+    _goalSubscription?.cancel();
     super.dispose();
+  }
+
+  void _setupGoalListener() {
+    _goalSubscription = _databaseService.getUserSettingsStream().listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        if (data.containsKey('dailyGoal') && mounted) {
+          setState(() {
+            _dailyGoal = data['dailyGoal'] ?? 2210;
+          });
+          _loadWeeklyData(); // Refresh chart percentages
+        }
+      }
+    });
   }
 
   void _setupTodayListener() {
@@ -150,6 +167,10 @@ class _MainScreenState extends State<MainScreen> {
   void _subtractWater(int amount) {
     int newIntake = (_currentWaterIntake - amount).clamp(0, 99999);
     _updateDatabaseIntake(newIntake, DateTime.now());
+  }
+
+  void _updateGoal(int newGoal) {
+    _databaseService.updateDailyGoal(newGoal);
   }
 
   bool _isToday(DateTime date) {
@@ -270,6 +291,7 @@ class _MainScreenState extends State<MainScreen> {
         page = SettingsPage(
           key: const ValueKey('settings_page'),
           currentGoal: _dailyGoal,
+          onGoalUpdated: _updateGoal,
         );
         break;
       default:

@@ -4,7 +4,8 @@ import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 
 class SettingsPage extends StatefulWidget {
   final int currentGoal;
-  const SettingsPage({super.key, required this.currentGoal});
+  final Function(int) onGoalUpdated;
+  const SettingsPage({super.key, required this.currentGoal, required this.onGoalUpdated});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -232,6 +233,9 @@ class _SettingsPageState extends State<SettingsPage> {
               min: 1000,
               max: 5000,
               onChanged: (val) => setState(() => _goalValue = val),
+              onChangeEnd: (val) {
+                widget.onGoalUpdated(val.toInt());
+              },
             ),
           ),
         ],
