@@ -16,6 +16,7 @@ class HomePage extends StatefulWidget {
   final Function(DateTime) onDateSelected;
   final List<double> weeklyData;
   final DateTime selectedDate;
+  final String profileIcon;
 
   const HomePage({
     super.key,
@@ -28,6 +29,7 @@ class HomePage extends StatefulWidget {
     required this.onDateSelected,
     required this.weeklyData,
     required this.selectedDate,
+    required this.profileIcon,
   });
 
   @override
@@ -383,7 +385,7 @@ class _HomePageState extends State<HomePage> {
                           CircleAvatar(
                             radius: 20,
                             backgroundColor: colorScheme.primary,
-                            child: Icon(Icons.person, color: colorScheme.onPrimary, size: 20),
+                            child: Text(widget.profileIcon, style: const TextStyle(fontSize: 20)),
                           ),
                           const SizedBox(width: 12),
                           Column(

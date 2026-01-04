@@ -26,6 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   
   // Shared state for the app
   int _dailyGoal = 2210; // Default, will be updated from Firebase
+  String _profileIcon = '👤'; // Default avatar
   Map<String, dynamic> _selectedDrink = {
     'name': 'Water', 
     'icon': Icons.water_drop, 
@@ -69,6 +70,11 @@ class _MainScreenState extends State<MainScreen> {
             _dailyGoal = data['dailyGoal'] ?? 2210;
           });
           _loadWeeklyData(); // Refresh chart percentages
+        }
+        if (data.containsKey('profileIcon') && mounted) {
+          setState(() {
+            _profileIcon = data['profileIcon'] ?? '👤';
+          });
         }
       }
     });
@@ -173,6 +179,10 @@ class _MainScreenState extends State<MainScreen> {
     _databaseService.updateDailyGoal(newGoal);
   }
 
+  void _updateProfileIcon(String icon) {
+    _databaseService.updateProfileIcon(icon);
+  }
+
   bool _isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year && date.month == now.month && date.day == now.day;
@@ -272,6 +282,7 @@ class _MainScreenState extends State<MainScreen> {
           onDateSelected: _onDateChanged,
           weeklyData: _weeklyIntakeData,
           selectedDate: _selectedDate,
+          profileIcon: _profileIcon,
         );
         break;
       case 1:
@@ -285,13 +296,16 @@ class _MainScreenState extends State<MainScreen> {
         page = LeaderboardPage(
           key: const ValueKey('leaderboard_page'),
           myIntake: _currentWaterIntake,
+          myAvatar: _profileIcon,
         );
         break;
       case 4:
         page = SettingsPage(
           key: const ValueKey('settings_page'),
           currentGoal: _dailyGoal,
+          currentIcon: _profileIcon,
           onGoalUpdated: _updateGoal,
+          onIconUpdated: _updateProfileIcon,
         );
         break;
       default:

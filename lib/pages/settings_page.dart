@@ -4,8 +4,17 @@ import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 
 class SettingsPage extends StatefulWidget {
   final int currentGoal;
+  final String currentIcon;
   final Function(int) onGoalUpdated;
-  const SettingsPage({super.key, required this.currentGoal, required this.onGoalUpdated});
+  final Function(String) onIconUpdated;
+
+  const SettingsPage({
+    super.key, 
+    required this.currentGoal, 
+    required this.currentIcon,
+    required this.onGoalUpdated,
+    required this.onIconUpdated,
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -13,14 +22,17 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
-
   late double _goalValue;
+  late String _selectedIcon;
   final User? _user = FirebaseAuth.instance.currentUser;
+
+  final List<String> animalIcons = ['👤', '🦊', '🦄', '🐻', '🐱', '🦁', '🐰', '🐼', '🐨', '🐯', '🐘', '🦒'];
 
   @override
   void initState() {
     super.initState();
     _goalValue = widget.currentGoal.toDouble();
+    _selectedIcon = widget.currentIcon;
   }
 
   @override
@@ -32,7 +44,6 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Background Gradient matching the app's aesthetic
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -48,28 +59,22 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Settings',
-                    style: textTheme.headlineMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('Settings', style: textTheme.headlineMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 30),
 
-                  // Profile Section
                   _buildProfileSection(context),
                   const SizedBox(height: 30),
 
-                  // Hydration settings group
+                  _buildSectionTitle('CHOOSE YOUR AVATAR'),
+                  const SizedBox(height: 15),
+                  _buildAvatarSelection(context),
+                  const SizedBox(height: 30),
+
                   _buildSectionTitle('HYDRATION GOALS'),
                   const SizedBox(height: 15),
                   _buildGoalAdjuster(context),
-
-                  
                   const SizedBox(height: 30),
 
-                  // Notifications & Preferences
                   _buildSectionTitle('PREFERENCES'),
                   const SizedBox(height: 15),
                   _buildSettingTile(
@@ -83,22 +88,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
 
-                  
                   const SizedBox(height: 30),
-
-                  // Account & Support
-                  _buildSectionTitle('ACCOUNT & SUPPORT'),
+                  _buildSectionTitle('ACCOUNT'),
                   const SizedBox(height: 15),
-                  _buildSettingTile(
-                    icon: Icons.security_rounded,
-                    title: 'Privacy Policy',
-                    onTap: () {},
-                  ),
-                  _buildSettingTile(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help Center',
-                    onTap: () {},
-                  ),
                   _buildSettingTile(
                     icon: Icons.logout_rounded,
                     title: 'Logout',
@@ -110,8 +102,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       }
                     },
                   ),
-
-                  const SizedBox(height: 100), // Space for bottom nav
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -124,12 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        color: const Color(0xFF2D3142).withOpacity(0.5),
-        letterSpacing: 1.2,
-      ),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF2D3142).withOpacity(0.5), letterSpacing: 1.2),
     );
   }
 
@@ -150,12 +136,10 @@ class _SettingsPageState extends State<SettingsPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: colorScheme.primary, width: 2),
-              image: DecorationImage(
-                image: _user?.photoURL != null 
-                    ? NetworkImage(_user!.photoURL!) 
-                    : const NetworkImage('https://api.dicebear.com/7.x/avataaars/svg?seed=User'),
-                fit: BoxFit.cover,
-              ),
+              color: Colors.white,
+            ),
+            child: Center(
+              child: Text(_selectedIcon, style: const TextStyle(fontSize: 40)),
             ),
           ),
           const SizedBox(width: 20),
@@ -163,29 +147,47 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _user?.displayName ?? 'User',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3142),
-                  ),
-                ),
-                Text(
-                  _user?.email ?? 'anonymous',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
+                Text(_user?.displayName ?? 'User', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+                Text(_user?.email ?? 'anonymous', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.edit_rounded, color: colorScheme.primary),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarSelection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+      ),
+      child: Wrap(
+        spacing: 15,
+        runSpacing: 15,
+        children: animalIcons.map((icon) {
+          final isSelected = _selectedIcon == icon;
+          return GestureDetector(
+            onTap: () {
+              setState(() => _selectedIcon = icon);
+              widget.onIconUpdated(icon);
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isSelected ? colorScheme.primary.withOpacity(0.2) : Colors.white.withOpacity(0.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: isSelected ? colorScheme.primary : Colors.transparent, width: 2),
+              ),
+              child: Center(child: Text(icon, style: const TextStyle(fontSize: 24))),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -205,77 +207,31 @@ class _SettingsPageState extends State<SettingsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Daily Intake Goal',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              Text(
-                '${_goalValue.toInt()} ml',
-                style: TextStyle(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
+              const Text('Daily Intake Goal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('${_goalValue.toInt()} ml', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
           const SizedBox(height: 10),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: colorScheme.primary,
-              inactiveTrackColor: colorScheme.primary.withOpacity(0.1),
-              thumbColor: Colors.white,
-              overlayColor: colorScheme.primary.withOpacity(0.2),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
-            ),
-            child: Slider(
-              value: _goalValue,
-              min: 1000,
-              max: 5000,
-              onChanged: (val) => setState(() => _goalValue = val),
-              onChangeEnd: (val) {
-                widget.onGoalUpdated(val.toInt());
-              },
-            ),
+          Slider(
+            value: _goalValue,
+            min: 1000,
+            max: 5000,
+            onChanged: (val) => setState(() => _goalValue = val),
+            onChangeEnd: (val) => widget.onGoalUpdated(val.toInt()),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSettingTile({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    Widget? trailing,
-    Color? titleColor,
-    VoidCallback? onTap,
-  }) {
+  Widget _buildSettingTile({required IconData icon, required String title, String? subtitle, Widget? trailing, Color? titleColor, VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.4), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5)),
       child: ListTile(
         onTap: onTap,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: const Color(0xFF928FFF), size: 20),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-            color: titleColor ?? const Color(0xFF2D3142),
-          ),
-        ),
+        leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: const Color(0xFF928FFF), size: 20)),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: titleColor ?? const Color(0xFF2D3142))),
         subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
         trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: Colors.grey),
       ),

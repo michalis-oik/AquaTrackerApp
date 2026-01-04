@@ -69,6 +69,14 @@ class DatabaseService {
     }, SetOptions(merge: true));
   }
 
+  // Update user's profile icon
+  Future<void> updateProfileIcon(String icon) async {
+    if (uid == null) return;
+    await _db.collection('users').doc(uid).set({
+      'profileIcon': icon,
+    }, SetOptions(merge: true));
+  }
+
   // Stream user settings (goal)
   Stream<DocumentSnapshot> getUserSettingsStream() {
     return _db.collection('users').doc(uid).snapshots();
