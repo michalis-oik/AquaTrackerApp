@@ -77,8 +77,121 @@ class DatabaseService {
     }, SetOptions(merge: true));
   }
 
-  // Stream user settings (goal)
+  // Stream user settings (goal and groups)
   Stream<DocumentSnapshot> getUserSettingsStream() {
     return _db.collection('users').doc(uid).snapshots();
   }
+
+  // --- Group Logic ---
+
+  // Create a new group
+  Future<String> createGroup(String name, int goal) async {
+    if (uid == null) return "";
+    
+    // Generate a unique 6-character invite code
+    String inviteCode = (uid!.substring(0, 3) + name.substring(0, min(3, name.length))).toUpperCase();
+    
+    DocumentReference groupRef = _db.collection('groups').doc();
+    await groupRef.set({
+      'name': name,
+      'adminId': uid,
+      'dailyGoal': goal,
+      'members': [uid],
+      'inviteCode': inviteCode,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Add group to user's list
+    await _db.collection('users').doc(uid).update({
+      'groups': FieldValue.arrayUnion([groupRef.id])
+    });
+
+    return groupRef.id;
+  }
+
+  // Join a group via invite code
+  Future<bool> joinGroupByCode(String code) async {
+    if (uid == null) return false;
+    
+    final query = await _db.collection('groups').where('inviteCode', isEqualTo: code.toUpperCase()).limit(1).get();
+    
+    if (query.docs.isEmpty) return false;
+    
+    String groupId = query.docs.first.id;
+    
+    // Check if already a member
+    List members = query.docs.first['members'] ?? [];
+    if (members.contains(uid)) return true;
+
+    // Add to group
+    await _db.collection('groups').doc(groupId).update({
+      'members': FieldValue.arrayUnion([uid])
+    });
+
+    // Add group to user
+    await _db.collection('users').doc(uid).update({
+      'groups': FieldValue.arrayUnion([groupId])
+    });
+
+    return true;
+  }
+
+  // Stream groups the user is in (simplified to prevent hangs)
+  Stream<DocumentSnapshot> getUserGroupsStream() {
+    if (uid == null) return const Stream.empty();
+    return _db.collection('users').doc(uid).snapshots();
+  }
+
+  // Fetch group details for a list of group IDs
+  Future<List<Map<String, dynamic>>> getGroupsDetails(List<dynamic> groupIds) async {
+    if (groupIds.isEmpty) return [];
+    try {
+      final groupFutures = groupIds.map((id) => _db.collection('groups').doc(id.toString()).get());
+      final groupDocs = await Future.wait(groupFutures).timeout(const Duration(seconds: 5), onTimeout: () => []);
+
+      return groupDocs
+          .where((doc) => doc.exists && doc.data() != null)
+          .map((doc) {
+            var gData = Map<String, dynamic>.from(doc.data()!);
+            gData['id'] = doc.id;
+            return gData;
+          })
+          .toList();
+    } catch (e) {
+      print("Error fetching groups details: $e");
+      return [];
+    }
+  }
+
+  // Stream members of a specific group
+  Stream<List<Map<String, dynamic>>> getGroupMembersDataStream(List<dynamic> memberIds) {
+    if (memberIds.isEmpty) return Stream.value([]);
+    return _db.collection('users').where(FieldPath.documentId, whereIn: memberIds).snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        var data = Map<String, dynamic>.from(doc.data() ?? {});
+        data['uid'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  // Helper to get today's string
+  String get _todayStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  // Stream intake for a list of users for today
+  Stream<Map<String, int>> getMembersIntakeStream(List<dynamic> memberIds) {
+    // We'll create a stream that combines individual user intake streams
+    // For simplicity in a client-side POC, we listen to the consumption collection path
+    // This is a bit inefficient if done many times, but works for small teams
+    return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
+      Map<String, int> intakeMap = {};
+      for (String mId in memberIds) {
+        var doc = await _db.collection('users').doc(mId).collection('consumption').doc(_todayStr).get();
+        intakeMap[mId] = doc.exists ? (doc.data()?['intake'] ?? 0) : 0;
+      }
+      return intakeMap;
+    });
+  }
+
+  int min(int a, int b) => a < b ? a : b;
 }
