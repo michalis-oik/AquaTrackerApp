@@ -4,21 +4,30 @@ import 'package:water_tracking_app/utils/calendarDayBox.dart';
 import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:water_tracking_app/utils/hydrationStatsChart.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
   final int currentIntake;
+  final int historyIntake;
   final int dailyGoal;
   final Map<String, dynamic> selectedDrink;
   final VoidCallback onAddWater;
   final VoidCallback onSelectDrinkTap;
+  final Function(DateTime) onDateSelected;
+  final List<double> weeklyData;
+  final DateTime selectedDate;
 
   const HomePage({
     super.key,
     required this.currentIntake,
+    required this.historyIntake,
     required this.dailyGoal,
     required this.selectedDrink,
     required this.onAddWater,
     required this.onSelectDrinkTap,
+    required this.onDateSelected,
+    required this.weeklyData,
+    required this.selectedDate,
   });
 
   @override
@@ -26,8 +35,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<double> myHydrationWeeklyData = [55, 38, 70, 48, 48, 70, 75];
-  List<Map<String, String>> _weekDays = [];
+  List<Map<String, dynamic>> _weekDays = [];
   int _selectedIndex = 0;
   int _currentDayIndex = 0;
 
@@ -48,7 +56,12 @@ class _HomePageState extends State<HomePage> {
       _weekDays.add({
         'dayOfWeek': DateFormat('E').format(date),
         'dayOfMonth': DateFormat('d').format(date),
+        'fullDate': date,
       });
+      // Synchronize initial selected index based on selectedDate prop
+      if (DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(widget.selectedDate)) {
+        _selectedIndex = i;
+      }
     }
   }
 
@@ -57,7 +70,8 @@ class _HomePageState extends State<HomePage> {
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
     
-    final double percentageOfGoal = (widget.currentIntake / widget.dailyGoal) * 100;
+    // Use historyIntake for the top row card
+    final double percentageOfGoal = (widget.historyIntake / widget.dailyGoal) * 100;
     final double percentageDifference = percentageOfGoal - 100;
     
     final String sign = percentageDifference >= 0 ? '+' : '';
@@ -84,7 +98,10 @@ class _HomePageState extends State<HomePage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3.0),
                 child: GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = index),
+                  onTap: () {
+                    setState(() => _selectedIndex = index);
+                    widget.onDateSelected(_weekDays[index]['fullDate'] as DateTime);
+                  },
                   child: Calendardaybox(
                     dayOfWeek: _weekDays[index]['dayOfWeek']!,
                     dayOfMonth: _weekDays[index]['dayOfMonth']!,
@@ -114,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        "${widget.currentIntake}ml",
+                        "${widget.historyIntake}ml",
                         style: textTheme.titleLarge?.copyWith(
                           color: colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
@@ -373,7 +390,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Hello", style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withAlpha(179))),
-                              Text("John Doe", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+                              Text(FirebaseAuth.instance.currentUser?.displayName ?? "User", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
                             ],
                           ),
                         ],
@@ -394,7 +411,7 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 20),
                           GlassmorphismCard(child: _buildDailyGoalCardContent(context)),
                           const SizedBox(height: 20),
-                          HydrationStatsChart(weeklyData: myHydrationWeeklyData),
+                          HydrationStatsChart(weeklyData: widget.weeklyData),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -407,5 +424,10 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 }

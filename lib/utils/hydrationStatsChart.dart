@@ -162,7 +162,7 @@ class HydrationStatsChart extends StatelessWidget {
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(
-                                    text: (rod.toY).toString(), // Text for the second line (the value)
+                                    text: "${rod.toY.toStringAsFixed(1)}%", // Text for the second line (the value)
                                     style: TextStyle(           // Style for the second line
                                       color: Theme.of(context).colorScheme.onSecondary,
                                       fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
@@ -214,7 +214,7 @@ class HydrationStatsChart extends StatelessWidget {
       fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
     );
     if (value % 25 == 0) {
-      return Text(value.toInt().toString(), style: style, textAlign: TextAlign.left);
+      return Text("${value.toInt()}%", style: style, textAlign: TextAlign.left);
     }
     return const Text('');
   }

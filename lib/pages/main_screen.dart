@@ -4,6 +4,10 @@ import 'package:water_tracking_app/pages/drink_selection_page.dart';
 import 'package:water_tracking_app/pages/reminders_page.dart';
 import 'package:water_tracking_app/pages/leaderboard_page.dart';
 import 'package:water_tracking_app/pages/settings_page.dart';
+import 'package:water_tracking_app/utils/database_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
 import 'dart:ui';
 
 
@@ -21,7 +25,6 @@ class _MainScreenState extends State<MainScreen> {
   bool _isDrinkSelectionOpen = false;
   
   // Shared state for the app
-  int _currentWaterIntake = 0;
   final int _dailyGoal = 2210;
   Map<String, dynamic> _selectedDrink = {
     'name': 'Water', 
@@ -29,6 +32,107 @@ class _MainScreenState extends State<MainScreen> {
     'color': const Color(0xFF4FC3F7), 
     'defaultAmount': 200
   };
+  
+  DateTime _selectedDate = DateTime.now();
+  int _currentWaterIntake = 0; // Always Today
+  int _historyWaterIntake = 0; // Intake for the selected top-row date
+  List<double> _weeklyIntakeData = [0, 0, 0, 0, 0, 0, 0];
+  StreamSubscription? _todaySubscription;
+  StreamSubscription? _historySubscription;
+
+  final DatabaseService _databaseService = DatabaseService();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupTodayListener();
+    _setupHistoryListener(_selectedDate);
+    _loadWeeklyData();
+  }
+
+  @override
+  void dispose() {
+    _todaySubscription?.cancel();
+    _historySubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupTodayListener() {
+    String todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    _todaySubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_databaseService.uid)
+        .collection('consumption')
+        .doc(todayStr)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _currentWaterIntake = data['intake'] ?? 0;
+          });
+          _loadWeeklyData();
+        }
+      } else {
+        if (mounted) setState(() => _currentWaterIntake = 0);
+      }
+    });
+  }
+
+  void _setupHistoryListener(DateTime date) {
+    _historySubscription?.cancel();
+    String dateStr = DateFormat('yyyy-MM-dd').format(date);
+    
+    _historySubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_databaseService.uid)
+        .collection('consumption')
+        .doc(dateStr)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _historyWaterIntake = data['intake'] ?? 0;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _historyWaterIntake = 0);
+      }
+    });
+  }
+
+  void _loadWeeklyData() async {
+    DateTime now = DateTime.now();
+    int currentDayIndex = now.weekday - 1;
+    List<String> dates = [];
+    
+    for (int i = 0; i < 7; i++) {
+      DateTime date = now.subtract(Duration(days: currentDayIndex - i));
+      dates.add(DateFormat('yyyy-MM-dd').format(date));
+    }
+
+    Map<String, int> data = await _databaseService.getWeeklyConsumption(dates);
+    
+    if (mounted) {
+      setState(() {
+        _weeklyIntakeData = dates.map((d) {
+          int intake = data[d] ?? 0;
+          // Calculate percentage for the chart (assuming goal is 2210)
+          return (intake / _dailyGoal * 100).clamp(0.0, 100.0);
+        }).toList();
+      });
+    }
+  }
+
+  void _onDateChanged(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+    });
+    _setupHistoryListener(date);
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -40,15 +144,40 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _addWater(int amount) {
-    setState(() {
-      _currentWaterIntake += amount;
-    });
+    _updateDatabaseIntake(_currentWaterIntake + amount, DateTime.now());
   }
 
   void _subtractWater(int amount) {
-    setState(() {
-      _currentWaterIntake = (_currentWaterIntake - amount).clamp(0, 99999);
-    });
+    int newIntake = (_currentWaterIntake - amount).clamp(0, 99999);
+    _updateDatabaseIntake(newIntake, DateTime.now());
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  void _showOnlyTodayError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("You can only track intake for today!"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _updateDatabaseIntake(int amount, DateTime date) async {
+    String dateStr = DateFormat('yyyy-MM-dd').format(date);
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_databaseService.uid)
+        .collection('consumption')
+        .doc(dateStr)
+        .set({
+      'intake': amount,
+      'timestamp': FieldValue.serverTimestamp(),
+      'lastUpdated': DateTime.now().toIso8601String(),
+    }, SetOptions(merge: true));
   }
 
   void _toggleDrinkSelection() {
@@ -114,10 +243,14 @@ class _MainScreenState extends State<MainScreen> {
         page = HomePage(
           key: const ValueKey('home_page'),
           currentIntake: _currentWaterIntake,
+          historyIntake: _historyWaterIntake,
           dailyGoal: _dailyGoal,
           selectedDrink: _selectedDrink,
           onAddWater: () => _addWater(_selectedDrink['defaultAmount'] as int),
           onSelectDrinkTap: _toggleDrinkSelection,
+          onDateSelected: _onDateChanged,
+          weeklyData: _weeklyIntakeData,
+          selectedDate: _selectedDate,
         );
         break;
       case 1:
