@@ -136,6 +136,118 @@ class DatabaseService {
     return true;
   }
 
+  // Leave a group (for non-admin members)
+  Future<bool> leaveGroup(String groupId) async {
+    if (uid == null) return false;
+    
+    try {
+      // Get group data to check if user is admin
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      if (!groupDoc.exists) return false;
+      
+      final groupData = groupDoc.data() as Map<String, dynamic>;
+      if (groupData['adminId'] == uid) {
+        // Admins should use deleteGroup instead
+        return false;
+      }
+      
+      // Remove user from group's members
+      await _db.collection('groups').doc(groupId).update({
+        'members': FieldValue.arrayRemove([uid])
+      });
+      
+      // Remove group from user's list
+      await _db.collection('users').doc(uid).update({
+        'groups': FieldValue.arrayRemove([groupId])
+      });
+      
+      return true;
+    } catch (e) {
+      print("Error leaving group: $e");
+      return false;
+    }
+  }
+
+  // Delete a group (admin only)
+  Future<bool> deleteGroup(String groupId) async {
+    if (uid == null) return false;
+    
+    try {
+      // Get group data to verify admin
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      if (!groupDoc.exists) return false;
+      
+      final groupData = groupDoc.data() as Map<String, dynamic>;
+      if (groupData['adminId'] != uid) {
+        // Only admin can delete
+        return false;
+      }
+      
+      List members = groupData['members'] ?? [];
+      
+      // Remove group from all members' user documents
+      for (String memberId in members) {
+        await _db.collection('users').doc(memberId).update({
+          'groups': FieldValue.arrayRemove([groupId])
+        });
+      }
+      
+      // Delete the group document
+      await _db.collection('groups').doc(groupId).delete();
+      
+      return true;
+    } catch (e) {
+      print("Error deleting group: $e");
+      return false;
+    }
+  }
+
+  // Update group name (admin only)
+  Future<bool> updateGroupName(String groupId, String newName) async {
+    if (uid == null || newName.trim().isEmpty) return false;
+    
+    try {
+      // Verify admin
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      if (!groupDoc.exists) return false;
+      
+      final groupData = groupDoc.data() as Map<String, dynamic>;
+      if (groupData['adminId'] != uid) return false;
+      
+      await _db.collection('groups').doc(groupId).update({
+        'name': newName.trim(),
+      });
+      
+      return true;
+    } catch (e) {
+      print("Error updating group name: $e");
+      return false;
+    }
+  }
+
+  // Update group daily goal (admin only)
+  Future<bool> updateGroupGoal(String groupId, int newGoal) async {
+    if (uid == null || newGoal <= 0) return false;
+    
+    try {
+      // Verify admin
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      if (!groupDoc.exists) return false;
+      
+      final groupData = groupDoc.data() as Map<String, dynamic>;
+      if (groupData['adminId'] != uid) return false;
+      
+      await _db.collection('groups').doc(groupId).update({
+        'dailyGoal': newGoal,
+      });
+      
+      return true;
+    } catch (e) {
+      print("Error updating group goal: $e");
+      return false;
+    }
+  }
+
   // Stream groups the user is in (simplified to prevent hangs)
   Stream<DocumentSnapshot> getUserGroupsStream() {
     if (uid == null) return const Stream.empty();

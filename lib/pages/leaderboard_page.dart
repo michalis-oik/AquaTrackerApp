@@ -229,6 +229,238 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     );
   }
 
+  Future<void> _confirmLeaveGroup(String groupId, String groupName) async {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave Team'),
+        content: Text('Are you sure you want to leave "$groupName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(context);
+              bool success = await _db.leaveGroup(groupId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? 'Left team successfully' : 'Failed to leave team'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteGroup(String groupId, String groupName) async {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Team'),
+        content: Text('Are you sure you want to permanently delete "$groupName"? This will remove all members and cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(context);
+              bool success = await _db.deleteGroup(groupId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? 'Team deleted successfully' : 'Failed to delete team'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  void _showGroupOptions(String groupId, String groupName, bool isAdmin, int currentGoal) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (isAdmin) ...[
+                ListTile(
+                  leading: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+                  title: const Text('Edit Team Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text('Change the name of this team', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditNameDialog(groupId, groupName);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.flag, color: Theme.of(context).colorScheme.primary),
+                  title: const Text('Edit Daily Goal', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text('Change the team\'s daily target', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditGoalDialog(groupId, currentGoal);
+                  },
+                ),
+                Divider(height: 1, color: Colors.grey.shade300),
+              ],
+              ListTile(
+                leading: Icon(
+                  isAdmin ? Icons.delete_outline : Icons.exit_to_app,
+                  color: Colors.red,
+                ),
+                title: Text(
+                  isAdmin ? 'Delete Team' : 'Leave Team',
+                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  isAdmin 
+                    ? 'Permanently delete this team'
+                    : 'Remove yourself from this team',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (isAdmin) {
+                    _confirmDeleteGroup(groupId, groupName);
+                  } else {
+                    _confirmLeaveGroup(groupId, groupName);
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditNameDialog(String groupId, String currentName) async {
+    String newName = currentName;
+    
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Team Name'),
+        content: TextField(
+          decoration: const InputDecoration(labelText: 'Team Name'),
+          controller: TextEditingController(text: currentName)..selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: currentName.length,
+          ),
+          onChanged: (val) => newName = val,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (newName.trim().isNotEmpty && newName != currentName) {
+                Navigator.pop(context);
+                bool success = await _db.updateGroupName(groupId, newName);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success ? 'Team name updated' : 'Failed to update name'),
+                    ),
+                  );
+                }
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showEditGoalDialog(String groupId, int currentGoal) async {
+    String goalText = currentGoal.toString();
+    
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Daily Goal'),
+        content: TextField(
+          decoration: const InputDecoration(
+            labelText: 'Daily Goal (ml)',
+            suffixText: 'ml',
+          ),
+          controller: TextEditingController(text: currentGoal.toString())..selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: currentGoal.toString().length,
+          ),
+          keyboardType: TextInputType.number,
+          onChanged: (val) => goalText = val,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              int? newGoal = int.tryParse(goalText);
+              if (newGoal != null && newGoal > 0 && newGoal != currentGoal) {
+                Navigator.pop(context);
+                bool success = await _db.updateGroupGoal(groupId, newGoal);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success ? 'Daily goal updated' : 'Failed to update goal'),
+                    ),
+                  );
+                }
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -317,7 +549,21 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                               indicatorSize: TabBarIndicatorSize.label,
                               dividerColor: Colors.transparent,
                               labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                              tabs: _userGroups.map((group) => Tab(text: group['name'] ?? 'Team')).toList(),
+                              tabs: _userGroups.map((group) {
+                                bool isGroupAdmin = group['adminId'] == _db.uid;
+                                return Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(group['name'] ?? 'Team'),
+                                      if (isGroupAdmin) ...[
+                                        const SizedBox(width: 6),
+                                        Icon(Icons.star, size: 14),
+                                      ],
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -341,6 +587,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   Widget _buildGroupView(Map<String, dynamic> group) {
     final colorScheme = Theme.of(context).colorScheme;
     String gId = group['id'];
+    String adminId = group['adminId'] ?? '';
+    bool isAdmin = adminId == _db.uid;
     List membersData = _groupMembers[gId] ?? [];
     Map<String, int> intakes = _groupIntakes[gId] ?? {};
     
@@ -351,11 +599,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
     List<Map<String, dynamic>> memberSlots = membersData.map((m) {
       String uid = m['uid'] ?? '';
+      bool isMemberAdmin = uid == adminId;
       return {
         'name': uid == _db.uid ? 'You' : (m['displayName'] ?? 'User'),
         'intake': intakes[uid] ?? 0,
         'avatar': m['profileIcon'] ?? '👤',
         'isMe': uid == _db.uid,
+        'isAdmin': isMemberAdmin,
       };
     }).toList();
 
@@ -366,8 +616,25 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       children: [
         const SizedBox(height: 10),
         _buildGroupGoalCard(group, currentTotal, goal, progress),
-        const SizedBox(height: 20),
-        Center(child: SelectableText("Invite Code: ${group['inviteCode']}", style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold))),
+        const SizedBox(height: 15),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Center(
+                child: SelectableText(
+                  "Invite Code: ${group['inviteCode']}",
+                  style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
+              onPressed: () => _showGroupOptions(gId, group['name'] ?? 'Team', isAdmin, goal),
+              tooltip: 'Group options',
+            ),
+          ],
+        ),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -589,6 +856,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   Widget _buildMemberTile(Map<String, dynamic> member, int rank, int percentage) {
     final colorScheme = Theme.of(context).colorScheme;
     bool isMe = member['isMe'] ?? false;
+    bool isAdmin = member['isAdmin'] ?? false;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -615,7 +883,15 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(member['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colorScheme.onSurface)),
+                Row(
+                  children: [
+                    Text(member['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colorScheme.onSurface)),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 6),
+                      Icon(Icons.star, size: 14, color: colorScheme.primary),
+                    ],
+                  ],
+                ),
                 Row(
                   children: [
                     Icon(Icons.water_drop, size: 12, color: colorScheme.primary),
