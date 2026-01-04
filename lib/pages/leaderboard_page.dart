@@ -21,8 +21,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   
   StreamSubscription? _groupsSubscription;
   final Map<String, StreamSubscription> _memberSubscriptions = {};
-  final Map<String, StreamSubscription> _intakeSubscriptions = {};
-  
   bool _isLoading = true;
   final Map<String, List<String>> _groupMemberLists = {};
 
@@ -30,6 +28,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   void initState() {
     super.initState();
     _setupGroupsListener();
+    
+    // Proactively sync current intake to groups when opening the leaderboard
+    _db.syncIntakeToGroups(widget.myIntake);
 
     // Absolute fallback: Show UI after 5 seconds no matter what
     Future.delayed(const Duration(seconds: 5), () {
@@ -79,10 +80,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       sub.cancel();
     }
     _memberSubscriptions.clear();
-    for (var sub in _intakeSubscriptions.values) {
-      sub.cancel();
-    }
-    _intakeSubscriptions.clear();
   }
 
   void _syncSubSubscriptions(List<Map<String, dynamic>> groups) {
@@ -90,13 +87,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
     // Cancel subs for groups we are no longer in
     _memberSubscriptions.removeWhere((id, sub) {
-      if (!activeGroupIds.contains(id)) {
-        sub.cancel();
-        return true;
-      }
-      return false;
-    });
-    _intakeSubscriptions.removeWhere((id, sub) {
       if (!activeGroupIds.contains(id)) {
         sub.cancel();
         return true;
@@ -122,11 +112,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       
       if (needsRefresh) {
         _memberSubscriptions[id]?.cancel();
-        _intakeSubscriptions[id]?.cancel();
         
         _groupMemberLists[id] = members;
         _setupMemberDataListener(id, members);
-        _setupIntakeListener(id, members);
       }
     }
   }
@@ -143,15 +131,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }, onError: (e) => debugPrint("Member data error: $e"));
   }
 
-  void _setupIntakeListener(String groupId, List memberIds) {
-    _intakeSubscriptions[groupId] = _db.getMembersIntakeStream(memberIds).listen((intakeMap) {
-      if (mounted) {
-        setState(() {
-          _groupIntakes[groupId] = intakeMap;
-        });
-      }
-    }, onError: (e) => debugPrint("Intake stream error: $e"));
-  }
 
   @override
   void dispose() {
@@ -588,29 +567,58 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   Widget _buildGroupView(Map<String, dynamic> group) {
     final colorScheme = Theme.of(context).colorScheme;
-    String gId = group['id'];
+    String gId = group['id'] ?? '';
     String adminId = group['adminId'] ?? '';
     bool isAdmin = adminId == _db.uid;
     List membersData = _groupMembers[gId] ?? [];
     Map<String, int> intakes = _groupIntakes[gId] ?? {};
     
-    int currentTotal = intakes.values.fold(0, (sum, val) => sum + val);
-    int goal = group['dailyGoal'] ?? 10000;
-    if (goal <= 0) goal = 10000;
-    double progress = (currentTotal / goal).clamp(0.0, 1.0);
+    // Safety check for group data types
+    int goalValue = 5000;
+    if (group['dailyGoal'] != null) {
+      goalValue = (group['dailyGoal'] is num) ? (group['dailyGoal'] as num).toInt() : int.tryParse(group['dailyGoal'].toString()) ?? 5000;
+    }
+    if (goalValue <= 0) goalValue = 5000;
 
+    int currentTotal = 0;
+    // Use centralized memberIntakes from the group document
+    Map<String, dynamic> intakeMap = group['memberIntakes'] ?? {};
+    
     List<Map<String, dynamic>> memberSlots = membersData.map((m) {
-      String uid = m['uid'] ?? '';
+      String uid = (m['uid'] ?? m['id'] ?? '').toString();
       bool isMemberAdmin = uid == adminId;
+      bool isMe = uid == _db.uid;
+      
+      // Use live intake from group doc, but favor local myIntake for 'isMe' to ensure instant feedback
+      int memberIntake = 0;
+      if (isMe) {
+        memberIntake = widget.myIntake;
+      } else if (intakeMap.containsKey(uid)) {
+        memberIntake = (intakeMap[uid] as num).toInt();
+      }
+      
+      int personalGoal = 2500;
+      if (m['dailyGoal'] != null) {
+        personalGoal = (m['dailyGoal'] is num) ? (m['dailyGoal'] as num).toInt() : 2500;
+      }
+      
       return {
-        'name': uid == _db.uid ? 'You' : (m['displayName'] ?? 'User'),
-        'intake': intakes[uid] ?? 0,
+        'uid': uid,
+        'name': isMe ? 'You' : (m['displayName'] ?? 'User'),
+        'intake': memberIntake,
         'avatar': m['profileIcon'] ?? '👤',
-        'isMe': uid == _db.uid,
+        'isMe': isMe,
         'isAdmin': isMemberAdmin,
-        'personalGoal': m['dailyGoal'] ?? 2500,
+        'personalGoal': personalGoal,
       };
     }).toList();
+
+    // Recalculate currentTotal based on memberSlots to ensure consistency
+    currentTotal = 0;
+    for (var slot in memberSlots) {
+      currentTotal += (slot['intake'] as int);
+    }
+    double progress = (currentTotal / goalValue).clamp(0.0, 1.0);
 
     memberSlots.sort((a, b) => (b['intake'] as int).compareTo(a['intake'] as int));
 
@@ -618,7 +626,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [
         const SizedBox(height: 10),
-        _buildGroupGoalCard(group, currentTotal, goal, progress),
+        _buildGroupGoalCard(group, currentTotal, goalValue, progress),
         const SizedBox(height: 15),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -626,14 +634,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             Expanded(
               child: Center(
                 child: SelectableText(
-                  "Invite Code: ${group['inviteCode']}",
+                  "Invite Code: ${group['inviteCode'] ?? '...'}",
                   style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
             ),
             IconButton(
               icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
-              onPressed: () => _showGroupOptions(gId, group['name'] ?? 'Team', isAdmin, goal),
+              onPressed: () => _showGroupOptions(gId, group['name'] ?? 'Team', isAdmin, goalValue),
               tooltip: 'Group options',
             ),
           ],

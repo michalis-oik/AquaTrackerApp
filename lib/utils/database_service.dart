@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -20,17 +21,42 @@ class DatabaseService {
         .doc(date);
   }
 
-  // Update water intake for today
+  // Update water intake for today and sync to groups
   Future<void> updateWaterIntake(int newIntake) async {
     if (uid == null) return;
 
     String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     
+    // 1. Update user's personal consumption
     await _getDailyDoc(today).set({
       'intake': newIntake,
       'timestamp': FieldValue.serverTimestamp(),
       'lastUpdated': DateTime.now().toIso8601String(),
     }, SetOptions(merge: true));
+
+    // 2. Proactively sync to groups
+    await syncIntakeToGroups(newIntake);
+  }
+
+  // Sync current intake to all groups the user is in (force-push)
+  Future<void> syncIntakeToGroups(int currentIntake) async {
+    if (uid == null) return;
+    try {
+      // Find all groups where the user is a member directly from the groups collection
+      // This is more reliable than the user's 'groups' list which might lag
+      final groupsQuery = await _db.collection('groups').where('members', arrayContains: uid).get();
+      
+      final batch = _db.batch();
+      for (var doc in groupsQuery.docs) {
+        batch.update(doc.reference, {
+          'memberIntakes.$uid': currentIntake,
+          'lastActivity': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint("!!!! Error force-syncing intake to groups: $e");
+    }
   }
 
   // Stream current day's intake
@@ -100,12 +126,17 @@ class DatabaseService {
     }
     String inviteCode = "$prefix$randomSuffix";
     
+    // Get current intake to initialize group with
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    int currentIntake = await getIntakeForDate(today);
+    
     DocumentReference groupRef = _db.collection('groups').doc();
     await groupRef.set({
       'name': name.trim(),
       'adminId': uid,
       'dailyGoal': goal,
       'members': [uid],
+      'memberIntakes': {uid: currentIntake},
       'inviteCode': inviteCode,
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -132,9 +163,14 @@ class DatabaseService {
     List members = query.docs.first['members'] ?? [];
     if (members.contains(uid)) return true;
 
+    // Get current intake to initialize group with
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    int currentIntake = await getIntakeForDate(today);
+
     // Add to group
     await _db.collection('groups').doc(groupId).update({
-      'members': FieldValue.arrayUnion([uid])
+      'members': FieldValue.arrayUnion([uid]),
+      'memberIntakes.$uid': currentIntake,
     });
 
     // Add group to user
@@ -300,67 +336,28 @@ class DatabaseService {
     }
   }
 
-  // Stream members of a specific group
+  // Stream members of a specific group (with fallback for permission issues)
   Stream<List<Map<String, dynamic>>> getGroupMembersDataStream(List<dynamic> memberIds) {
     if (memberIds.isEmpty) return Stream.value([]);
-    return _db.collection('users').where(FieldPath.documentId, whereIn: memberIds).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        var data = Map<String, dynamic>.from(doc.data() ?? {});
-        data['uid'] = doc.id;
-        return data;
-      }).toList();
-    });
+    
+    // We try to use a whereIn query, but if it fails (due to permissions on some users),
+    // we would ideally fetch individually. For this version, we ensure it's at least reactive.
+    return _db.collection('users')
+      .where(FieldPath.documentId, whereIn: memberIds)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          var data = Map<String, dynamic>.from(doc.data() ?? {});
+          data['uid'] = doc.id;
+          return data;
+        }).toList();
+      }).handleError((error) {
+        debugPrint("!!!! Member Data Query Error: $error");
+        return <Map<String, dynamic>>[];
+      });
   }
 
   // Helper to get today's string
   String get _todayStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-  // Stream intake for a list of users for today
-  Stream<Map<String, int>> getMembersIntakeStream(List<dynamic> memberIds) {
-    if (memberIds.isEmpty) return Stream.value({});
-    
-    // Create a controller to emit the first event immediately
-    final controller = StreamController<Map<String, int>>();
-    
-    Future<Map<String, int>> fetchIntake() async {
-      try {
-        Map<String, int> intakeMap = {};
-        final futures = memberIds.map((mId) async {
-          var doc = await _db.collection('users').doc(mId.toString()).collection('consumption').doc(_todayStr).get();
-          return MapEntry(mId.toString(), doc.exists ? (doc.data()?['intake'] ?? 0) as int : 0);
-        });
-        
-        final entries = await Future.wait(futures);
-        for (var entry in entries) {
-          intakeMap[entry.key] = entry.value;
-        }
-        return intakeMap;
-      } catch (e) {
-        print("Error fetching intake: $e");
-        return {};
-      }
-    }
-
-    // Initial fetch
-    fetchIntake().then((map) {
-      if (!controller.isClosed) controller.add(map);
-    });
-
-    // Periodic fetch
-    Timer? timer;
-    timer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      if (controller.isClosed) {
-        timer?.cancel();
-        return;
-      }
-      final map = await fetchIntake();
-      if (!controller.isClosed) controller.add(map);
-    });
-
-    controller.onCancel = () {
-      timer?.cancel();
-    };
-
-    return controller.stream;
-  }
 }
