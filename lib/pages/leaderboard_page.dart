@@ -24,6 +24,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   final Map<String, StreamSubscription> _intakeSubscriptions = {};
   
   bool _isLoading = true;
+  final Map<String, List<String>> _groupMemberLists = {};
 
   @override
   void initState() {
@@ -106,15 +107,24 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     // Add or update subs
     for (var group in groups) {
       String id = group['id'];
-      List members = group['members'] ?? [];
+      List<String> members = (group['members'] as List? ?? []).map((m) => m.toString()).toList();
       
       // If the group is new OR the member list changed, we need new listeners
-      // (Simplified check: ideally compare lists, but for now we re-sub if members list is different in length or we don't have it)
-      bool needsRefresh = !_memberSubscriptions.containsKey(id);
+      bool membersChanged = false;
+      if (_groupMemberLists.containsKey(id)) {
+        List<String> oldMembers = _groupMemberLists[id]!;
+        if (oldMembers.length != members.length || !oldMembers.every((m) => members.contains(m))) {
+          membersChanged = true;
+        }
+      }
+
+      bool needsRefresh = !_memberSubscriptions.containsKey(id) || membersChanged;
       
       if (needsRefresh) {
         _memberSubscriptions[id]?.cancel();
         _intakeSubscriptions[id]?.cancel();
+        
+        _groupMemberLists[id] = members;
         _setupMemberDataListener(id, members);
         _setupIntakeListener(id, members);
       }

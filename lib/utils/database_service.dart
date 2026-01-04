@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
+import 'dart:async';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -89,11 +91,18 @@ class DatabaseService {
     if (uid == null) return "";
     
     // Generate a unique 6-character invite code
-    String inviteCode = (uid!.substring(0, 3) + name.substring(0, min(3, name.length))).toUpperCase();
+    final random = Random();
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    String randomSuffix = List.generate(3, (index) => chars[random.nextInt(chars.length)]).join();
+    String prefix = (name.replaceAll(' ', '').substring(0, min(3, name.replaceAll(' ', '').length))).toUpperCase();
+    if (prefix.length < 3) {
+      prefix = (prefix + 'AAA').substring(0, 3);
+    }
+    String inviteCode = "$prefix$randomSuffix";
     
     DocumentReference groupRef = _db.collection('groups').doc();
     await groupRef.set({
-      'name': name,
+      'name': name.trim(),
       'adminId': uid,
       'dailyGoal': goal,
       'members': [uid],
@@ -310,10 +319,10 @@ class DatabaseService {
   Stream<Map<String, int>> getMembersIntakeStream(List<dynamic> memberIds) {
     if (memberIds.isEmpty) return Stream.value({});
     
-    // We'll create a stream that combines individual user intake streams
-    // For simplicity in a client-side POC, we poll every 5 seconds.
-    // In a production app, we would use a collectionGroup query with listeners.
-    return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
+    // Create a controller to emit the first event immediately
+    final controller = StreamController<Map<String, int>>();
+    
+    Future<Map<String, int>> fetchIntake() async {
       try {
         Map<String, int> intakeMap = {};
         final futures = memberIds.map((mId) async {
@@ -327,11 +336,31 @@ class DatabaseService {
         }
         return intakeMap;
       } catch (e) {
-        print("Error fetching members intake: $e");
+        print("Error fetching intake: $e");
         return {};
       }
-    });
-  }
+    }
 
-  int min(int a, int b) => a < b ? a : b;
+    // Initial fetch
+    fetchIntake().then((map) {
+      if (!controller.isClosed) controller.add(map);
+    });
+
+    // Periodic fetch
+    Timer? timer;
+    timer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (controller.isClosed) {
+        timer?.cancel();
+        return;
+      }
+      final map = await fetchIntake();
+      if (!controller.isClosed) controller.add(map);
+    });
+
+    controller.onCancel = () {
+      timer?.cancel();
+    };
+
+    return controller.stream;
+  }
 }
