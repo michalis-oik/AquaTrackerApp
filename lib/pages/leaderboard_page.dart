@@ -12,8 +12,7 @@ class LeaderboardPage extends StatefulWidget {
   State<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
-class _LeaderboardPageState extends State<LeaderboardPage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _LeaderboardPageState extends State<LeaderboardPage> {
   final DatabaseService _db = DatabaseService();
   
   List<Map<String, dynamic>> _userGroups = [];
@@ -21,16 +20,18 @@ class _LeaderboardPageState extends State<LeaderboardPage> with SingleTickerProv
   Map<String, Map<String, int>> _groupIntakes = {};
   
   StreamSubscription? _groupsSubscription;
+  final Map<String, StreamSubscription> _memberSubscriptions = {};
+  final Map<String, StreamSubscription> _intakeSubscriptions = {};
+  
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 1, vsync: this);
     _setupGroupsListener();
 
-    // Absolute fallback: Show UI after 4 seconds no matter what
-    Future.delayed(const Duration(seconds: 4), () {
+    // Absolute fallback: Show UI after 5 seconds no matter what
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted && _isLoading) {
         setState(() => _isLoading = false);
       }
@@ -39,83 +40,122 @@ class _LeaderboardPageState extends State<LeaderboardPage> with SingleTickerProv
 
   void _setupGroupsListener() {
     _groupsSubscription = _db.getUserGroupsStream().listen((userDoc) async {
-      if (!mounted) return;
-      
-      List groupIds = [];
-      if (userDoc.exists && userDoc.data() != null) {
-        final data = userDoc.data() as Map<String, dynamic>;
-        groupIds = data['groups'] as List? ?? [];
-      }
-
-      if (groupIds.isEmpty) {
-        if (mounted) {
-          setState(() {
-            _userGroups = [];
-            _isLoading = false;
-            _updateTabController(0);
-          });
+      try {
+        if (!mounted) return;
+        
+        List groupIds = [];
+        if (userDoc.exists && userDoc.data() != null) {
+          final data = userDoc.data() as Map<String, dynamic>;
+          groupIds = data['groups'] as List? ?? [];
         }
-        return;
-      }
 
-      // Fetch details outside of the stream generator to prevent hangs
-      final details = await _db.getGroupsDetails(groupIds);
-      
-      if (!mounted) return;
+        if (groupIds.isEmpty) {
+          if (mounted) {
+            setState(() {
+              _userGroups = [];
+              _isLoading = false;
+              _clearSubSubscriptions();
+            });
+          }
+          return;
+        }
 
-      setState(() {
-        _userGroups = details;
-        _isLoading = false;
-        _updateTabController(_userGroups.length);
-      });
+        // Fetch details outside of the stream generator to prevent hangs
+        final details = await _db.getGroupsDetails(groupIds);
+        
+        if (!mounted) return;
 
-      for (var group in details) {
-        _setupMemberDataListener(group['id'], group['members']);
-        _setupIntakeListener(group['id'], group['members']);
+        setState(() {
+          _userGroups = details;
+          _isLoading = false;
+        });
+
+        // Sync subscriptions
+        _syncSubSubscriptions(details);
+      } catch (e) {
+        debugPrint("Error in group listener: $e");
+        if (mounted) setState(() => _isLoading = false);
       }
     }, onError: (err) {
+      debugPrint("Groups stream error: $err");
       if (mounted) setState(() => _isLoading = false);
     });
   }
 
-  void _updateTabController(int newLength) {
-    int oldIndex = _tabController.index;
-    int safeLength = newLength > 0 ? newLength : 1;
-    
-    if (safeLength != _tabController.length) {
-      _tabController.dispose();
-      _tabController = TabController(
-        length: safeLength,
-        vsync: this,
-        initialIndex: (newLength > 0 && oldIndex < newLength) ? oldIndex : 0
-      );
+  void _clearSubSubscriptions() {
+    for (var sub in _memberSubscriptions.values) {
+      sub.cancel();
+    }
+    _memberSubscriptions.clear();
+    for (var sub in _intakeSubscriptions.values) {
+      sub.cancel();
+    }
+    _intakeSubscriptions.clear();
+  }
+
+  void _syncSubSubscriptions(List<Map<String, dynamic>> groups) {
+    Set<String> activeGroupIds = groups.map((g) => g['id'] as String).toSet();
+
+    // Cancel subs for groups we are no longer in
+    _memberSubscriptions.removeWhere((id, sub) {
+      if (!activeGroupIds.contains(id)) {
+        sub.cancel();
+        return true;
+      }
+      return false;
+    });
+    _intakeSubscriptions.removeWhere((id, sub) {
+      if (!activeGroupIds.contains(id)) {
+        sub.cancel();
+        return true;
+      }
+      return false;
+    });
+
+    // Add or update subs
+    for (var group in groups) {
+      String id = group['id'];
+      List members = group['members'] ?? [];
+      
+      // If the group is new OR the member list changed, we need new listeners
+      // (Simplified check: ideally compare lists, but for now we re-sub if members list is different in length or we don't have it)
+      bool needsRefresh = !_memberSubscriptions.containsKey(id);
+      
+      if (needsRefresh) {
+        _memberSubscriptions[id]?.cancel();
+        _intakeSubscriptions[id]?.cancel();
+        _setupMemberDataListener(id, members);
+        _setupIntakeListener(id, members);
+      }
     }
   }
 
+  // Removed manual _updateTabController
+
   void _setupMemberDataListener(String groupId, List memberIds) {
-    _db.getGroupMembersDataStream(memberIds).listen((memberData) {
+    _memberSubscriptions[groupId] = _db.getGroupMembersDataStream(memberIds).listen((memberData) {
       if (mounted) {
         setState(() {
           _groupMembers[groupId] = memberData;
         });
       }
-    });
+    }, onError: (e) => debugPrint("Member data error: $e"));
   }
 
   void _setupIntakeListener(String groupId, List memberIds) {
-    _db.getMembersIntakeStream(memberIds).listen((intakeMap) {
+    _intakeSubscriptions[groupId] = _db.getMembersIntakeStream(memberIds).listen((intakeMap) {
       if (mounted) {
         setState(() {
           _groupIntakes[groupId] = intakeMap;
         });
       }
-    });
+    }, onError: (e) => debugPrint("Intake stream error: $e"));
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _groupsSubscription?.cancel();
+    _clearSubSubscriptions();
     super.dispose();
   }
 
@@ -259,30 +299,37 @@ class _LeaderboardPageState extends State<LeaderboardPage> with SingleTickerProv
                       ),
                     ),
                   )
-                else ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      labelColor: colorScheme.primary,
-                      unselectedLabelColor: colorScheme.onSurface.withOpacity(0.4),
-                      indicatorColor: colorScheme.primary,
-                      indicatorWeight: 3,
-                      indicatorSize: TabBarIndicatorSize.label,
-                      dividerColor: Colors.transparent,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      tabs: _userGroups.map((group) => Tab(text: group['name'])).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
+                else
                   Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: _userGroups.map((group) => _buildGroupView(group)).toList(),
+                    child: DefaultTabController(
+                      length: _userGroups.length,
+                      key: ValueKey('leaderboard_tabs_${_userGroups.length}'), 
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: TabBar(
+                              isScrollable: true,
+                              labelColor: colorScheme.primary,
+                              unselectedLabelColor: colorScheme.onSurface.withOpacity(0.4),
+                              indicatorColor: colorScheme.primary,
+                              indicatorWeight: 3,
+                              indicatorSize: TabBarIndicatorSize.label,
+                              dividerColor: Colors.transparent,
+                              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              tabs: _userGroups.map((group) => Tab(text: group['name'] ?? 'Team')).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Expanded(
+                            child: TabBarView(
+                              children: _userGroups.map((group) => _buildGroupView(group)).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
               ],
             ),
           ),

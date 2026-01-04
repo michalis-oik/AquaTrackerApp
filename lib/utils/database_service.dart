@@ -180,16 +180,28 @@ class DatabaseService {
 
   // Stream intake for a list of users for today
   Stream<Map<String, int>> getMembersIntakeStream(List<dynamic> memberIds) {
+    if (memberIds.isEmpty) return Stream.value({});
+    
     // We'll create a stream that combines individual user intake streams
-    // For simplicity in a client-side POC, we listen to the consumption collection path
-    // This is a bit inefficient if done many times, but works for small teams
+    // For simplicity in a client-side POC, we poll every 5 seconds.
+    // In a production app, we would use a collectionGroup query with listeners.
     return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
-      Map<String, int> intakeMap = {};
-      for (String mId in memberIds) {
-        var doc = await _db.collection('users').doc(mId).collection('consumption').doc(_todayStr).get();
-        intakeMap[mId] = doc.exists ? (doc.data()?['intake'] ?? 0) : 0;
+      try {
+        Map<String, int> intakeMap = {};
+        final futures = memberIds.map((mId) async {
+          var doc = await _db.collection('users').doc(mId.toString()).collection('consumption').doc(_todayStr).get();
+          return MapEntry(mId.toString(), doc.exists ? (doc.data()?['intake'] ?? 0) as int : 0);
+        });
+        
+        final entries = await Future.wait(futures);
+        for (var entry in entries) {
+          intakeMap[entry.key] = entry.value;
+        }
+        return intakeMap;
+      } catch (e) {
+        print("Error fetching members intake: $e");
+        return {};
       }
-      return intakeMap;
     });
   }
 
