@@ -14,6 +14,7 @@ class DrinkSelectionPage extends StatefulWidget {
   final int dailyGoal;
   final Map<String, dynamic> initialSelectedDrink;
   final Function(int) onDrinkAdded;
+  final Function(int) onDrinkRemoved;
   final Function(Map<String, dynamic>) onDrinkSelected;
   final VoidCallback onClose;
 
@@ -23,6 +24,7 @@ class DrinkSelectionPage extends StatefulWidget {
     required this.dailyGoal,
     required this.initialSelectedDrink,
     required this.onDrinkAdded,
+    required this.onDrinkRemoved,
     required this.onDrinkSelected,
     required this.onClose,
   });
@@ -57,6 +59,22 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
       _currentIntake += amount;
     });
     widget.onDrinkAdded(amount);
+  }
+
+  void _removeDrink() {
+    int amount = _selectedDrink['defaultAmount'] as int;
+    if (_currentIntake >= amount) {
+      setState(() {
+        _currentIntake -= amount;
+      });
+      widget.onDrinkRemoved(amount);
+    } else if (_currentIntake > 0) {
+      int remaining = _currentIntake;
+      setState(() {
+        _currentIntake = 0;
+      });
+      widget.onDrinkRemoved(remaining);
+    }
   }
 
   @override
@@ -119,6 +137,19 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             GestureDetector(
+                              onTap: _removeDrink,
+                              child: GlassmorphismCard(
+                                padding: const EdgeInsets.all(12),
+                                borderRadius: 50,
+                                child: Icon(
+                                  Icons.remove,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.8),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            GestureDetector(
                               onTap: _addDrink,
                               child: GlassmorphismCard(
                                 padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
@@ -147,6 +178,14 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Tap '-' to subtract if you added by mistake",
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            fontSize: 10,
+                          ),
                         ),
 
                         const SizedBox(height: 40),

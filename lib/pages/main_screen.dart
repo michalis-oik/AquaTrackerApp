@@ -45,6 +45,12 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void _subtractWater(int amount) {
+    setState(() {
+      _currentWaterIntake = (_currentWaterIntake - amount).clamp(0, 99999);
+    });
+  }
+
   void _toggleDrinkSelection() {
     setState(() {
       if (!_isDrinkSelectionOpen) {
@@ -83,6 +89,7 @@ class _MainScreenState extends State<MainScreen> {
                       dailyGoal: _dailyGoal,
                       initialSelectedDrink: _selectedDrink,
                       onDrinkAdded: _addWater,
+                      onDrinkRemoved: _subtractWater,
                       onDrinkSelected: (drink) {
                         setState(() {
                           _selectedDrink = drink;
