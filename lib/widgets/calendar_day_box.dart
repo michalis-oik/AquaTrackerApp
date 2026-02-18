@@ -8,13 +8,13 @@ extension ColorValues on Color {
   }
 }
 
-class Calendardaybox extends StatelessWidget {
+class CalendarDayBox extends StatelessWidget {
   final String dayOfWeek;
   final String dayOfMonth;
   final bool isSelected;
   final bool isCurrentDay;
 
-  const Calendardaybox({
+  const CalendarDayBox({
     super.key,
     required this.dayOfWeek,
     required this.dayOfMonth,
@@ -29,10 +29,18 @@ class Calendardaybox extends StatelessWidget {
     final TextTheme textTheme = theme.textTheme;
 
     // This logic remains exactly the same. When isSelected changes, these values change.
-    final Color boxColor = isSelected ? colorScheme.primary : Colors.white.withValues(alpha: 0.8);
-    final Color dayOfWeekColor = isSelected ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.8);
-    final Color circleColor = isSelected ? Colors.white.withValues(alpha: 0.25) : colorScheme.primary.withValues(alpha: 0.1);
-    final Color dayOfMonthColor = isSelected ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.9);
+    final Color boxColor = isSelected
+        ? colorScheme.primary
+        : Colors.white.withValues(alpha: 0.8);
+    final Color dayOfWeekColor = isSelected
+        ? colorScheme.onPrimary
+        : colorScheme.onSurface.withValues(alpha: 0.8);
+    final Color circleColor = isSelected
+        ? Colors.white.withValues(alpha: 0.25)
+        : colorScheme.primary.withValues(alpha: 0.1);
+    final Color dayOfMonthColor = isSelected
+        ? colorScheme.onPrimary
+        : colorScheme.onSurface.withValues(alpha: 0.9);
 
     const double height = 60;
 
@@ -42,18 +50,21 @@ class Calendardaybox extends StatelessWidget {
 
         // --- CHANGES START HERE ---
 
-        return AnimatedContainer( // 1. Was 'Container'
+        return AnimatedContainer(
+          // 1. Was 'Container'
           // 2. Add the duration for the animation
-          duration: const Duration(milliseconds: 300), 
+          duration: const Duration(milliseconds: 300),
           // 3. (Optional but nice) Add a curve for smoother animation
-          curve: Curves.easeInOut, 
+          curve: Curves.easeInOut,
 
           height: height,
           decoration: BoxDecoration(
             // AnimatedContainer will automatically animate this color change
-            color: boxColor, 
+            color: boxColor,
             borderRadius: BorderRadius.circular(width / 2),
-            border: isCurrentDay && !isSelected ? Border.all(color: colorScheme.primary, width: 2) : null,
+            border: isCurrentDay && !isSelected
+                ? Border.all(color: colorScheme.primary, width: 2)
+                : null,
             boxShadow: [
               if (isSelected) // Only show shadow when selected for a "pop" effect
                 BoxShadow(
@@ -91,7 +102,7 @@ class Calendardaybox extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),

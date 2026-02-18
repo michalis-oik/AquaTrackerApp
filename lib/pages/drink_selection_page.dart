@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:water_tracking_app/utils/glassmorphism_card.dart';
+import 'package:water_tracking_app/widgets/glassmorphism_card.dart';
 
 extension ColorValues on Color {
   Color withValues({double? opacity}) {
@@ -38,12 +38,42 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
   late Map<String, dynamic> _selectedDrink;
 
   final List<Map<String, dynamic>> drinks = const [
-    {'name': 'Water', 'icon': Icons.water_drop, 'color': Color(0xFF4FC3F7), 'defaultAmount': 200},
-    {'name': 'Kompot', 'icon': Icons.wine_bar_outlined, 'color': Color(0xFFFFB74D), 'defaultAmount': 150},
-    {'name': 'Coffee', 'icon': Icons.coffee_rounded, 'color': Color(0xFFFFEE58), 'defaultAmount': 100},
-    {'name': 'Wine', 'icon': Icons.wine_bar, 'color': Color(0xFFEF5350), 'defaultAmount': 200},
-    {'name': 'Milk', 'icon': Icons.egg_outlined, 'color': Color(0xFFBDBDBD), 'defaultAmount': 250},
-    {'name': 'Juice', 'icon': Icons.local_drink_rounded, 'color': Color(0xFFE57373), 'defaultAmount': 200},
+    {
+      'name': 'Water',
+      'icon': Icons.water_drop,
+      'color': Color(0xFF4FC3F7),
+      'defaultAmount': 200,
+    },
+    {
+      'name': 'Kompot',
+      'icon': Icons.wine_bar_outlined,
+      'color': Color(0xFFFFB74D),
+      'defaultAmount': 150,
+    },
+    {
+      'name': 'Coffee',
+      'icon': Icons.coffee_rounded,
+      'color': Color(0xFFFFEE58),
+      'defaultAmount': 100,
+    },
+    {
+      'name': 'Wine',
+      'icon': Icons.wine_bar,
+      'color': Color(0xFFEF5350),
+      'defaultAmount': 200,
+    },
+    {
+      'name': 'Milk',
+      'icon': Icons.egg_outlined,
+      'color': Color(0xFFBDBDBD),
+      'defaultAmount': 250,
+    },
+    {
+      'name': 'Juice',
+      'icon': Icons.local_drink_rounded,
+      'color': Color(0xFFE57373),
+      'defaultAmount': 200,
+    },
   ];
 
   @override
@@ -105,11 +135,18 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
               children: [
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 20,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildCircularButton(context, Icons.chevron_left, widget.onClose),
+                      _buildCircularButton(
+                        context,
+                        Icons.chevron_left,
+                        widget.onClose,
+                      ),
                       Text(
                         "Select Drink",
                         style: textTheme.titleLarge?.copyWith(
@@ -117,7 +154,11 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                           color: colorScheme.onSurface,
                         ),
                       ),
-                      _buildCircularButton(context, Icons.share_outlined, () {}),
+                      _buildCircularButton(
+                        context,
+                        Icons.share_outlined,
+                        () {},
+                      ),
                     ],
                   ),
                 ),
@@ -131,7 +172,7 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                         _buildLiquidProgressIndicator(context),
 
                         const SizedBox(height: 30),
-                        
+
                         // Action row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -143,7 +184,9 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                                 borderRadius: 50,
                                 child: Icon(
                                   Icons.remove,
-                                  color: colorScheme.onSurface.withValues(alpha: 0.8),
+                                  color: colorScheme.onSurface.withValues(
+                                    alpha: 0.8,
+                                  ),
                                   size: 20,
                                 ),
                               ),
@@ -152,7 +195,10 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                             GestureDetector(
                               onTap: _addDrink,
                               child: GlassmorphismCard(
-                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 25,
+                                  vertical: 12,
+                                ),
                                 borderRadius: 30,
                                 child: Text(
                                   "Drink ${_selectedDrink['defaultAmount']} ml",
@@ -167,14 +213,22 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: colorScheme.primary.withValues(alpha: 0.3),
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.3,
+                                ),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: colorScheme.primary.withValues(alpha: 0.5)),
+                                border: Border.all(
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
                               ),
                               child: Icon(
-                                _selectedDrink['name'] == 'Water' ? Icons.water_drop : _selectedDrink['icon'], 
-                                color: colorScheme.onSurface, 
-                                size: 24
+                                _selectedDrink['name'] == 'Water'
+                                    ? Icons.water_drop
+                                    : _selectedDrink['icon'],
+                                color: colorScheme.onSurface,
+                                size: 24,
                               ),
                             ),
                           ],
@@ -207,17 +261,23 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                               GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 15,
-                                  mainAxisSpacing: 15,
-                                  childAspectRatio: 0.8,
-                                ),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 15,
+                                      mainAxisSpacing: 15,
+                                      childAspectRatio: 0.8,
+                                    ),
                                 itemCount: drinks.length,
                                 itemBuilder: (context, index) {
                                   final drink = drinks[index];
-                                  final isSelected = _selectedDrink['name'] == drink['name'];
-                                  return _buildDrinkCard(context, drink, isSelected);
+                                  final isSelected =
+                                      _selectedDrink['name'] == drink['name'];
+                                  return _buildDrinkCard(
+                                    context,
+                                    drink,
+                                    isSelected,
+                                  );
                                 },
                               ),
                             ],
@@ -236,7 +296,11 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
     );
   }
 
-  Widget _buildCircularButton(BuildContext context, IconData icon, VoidCallback onTap) {
+  Widget _buildCircularButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
@@ -265,12 +329,12 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: colorScheme.primary.withValues(alpha: 0.2), 
+                color: colorScheme.primary.withValues(alpha: 0.2),
                 width: 10,
               ),
             ),
           ),
-          
+
           // Outer progress arc (using a simple circular indicator)
           SizedBox(
             width: 210,
@@ -292,7 +356,7 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
               color: colorScheme.surface.withValues(alpha: 0.3),
               child: Stack(
                 children: [
-                   // Liquid fill
+                  // Liquid fill
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -327,10 +391,7 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                         ),
                         const Text(
                           "ml",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -339,24 +400,36 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
               ),
             ),
           ),
-          
+
           // Heart and Water Drop icons
           Positioned(
             left: 0,
             bottom: 40,
-            child: Icon(Icons.favorite, color: Colors.orange.shade300, size: 28),
+            child: Icon(
+              Icons.favorite,
+              color: Colors.orange.shade300,
+              size: 28,
+            ),
           ),
           Positioned(
             right: 0,
             bottom: 40,
-            child: Icon(Icons.water_drop, color: Colors.blue.shade300, size: 28),
+            child: Icon(
+              Icons.water_drop,
+              color: Colors.blue.shade300,
+              size: 28,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDrinkCard(BuildContext context, Map<String, dynamic> drink, bool isSelected) {
+  Widget _buildDrinkCard(
+    BuildContext context,
+    Map<String, dynamic> drink,
+    bool isSelected,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -393,9 +466,13 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         color: colorScheme.primary.withValues(alpha: 0.8),
-                        shape: BoxShape.circle
+                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add, size: 10, color: Colors.white),
+                      child: const Icon(
+                        Icons.add,
+                        size: 10,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -404,15 +481,15 @@ class _DrinkSelectionPageState extends State<DrinkSelectionPage> {
               Text(
                 drink['name'],
                 style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold, 
-                  color: colorScheme.onSurface
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Text(
                 "${drink['defaultAmount']} ML",
                 style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.6), 
-                  fontSize: 10
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontSize: 10,
                 ),
               ),
             ],

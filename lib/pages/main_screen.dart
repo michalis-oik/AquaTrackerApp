@@ -4,13 +4,10 @@ import 'package:water_tracking_app/pages/drink_selection_page.dart';
 import 'package:water_tracking_app/pages/reminders_page.dart';
 import 'package:water_tracking_app/pages/leaderboard_page.dart';
 import 'package:water_tracking_app/pages/settings_page.dart';
-import 'package:water_tracking_app/utils/database_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:water_tracking_app/services/database_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'dart:ui';
-
-
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -23,82 +20,67 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   int _previousIndex = 0;
   bool _isDrinkSelectionOpen = false;
-  
-  // Shared state for the app
-  int _dailyGoal = 2210; // Default, will be updated from Firebase
-  String _profileIcon = '👤'; // Default avatar
+
+  // Shared state
+  int _dailyGoal = 2500;
+  String _profileIcon = '👤';
   Map<String, dynamic> _selectedDrink = {
-    'name': 'Water', 
-    'icon': Icons.water_drop, 
-    'color': const Color(0xFF4FC3F7), 
-    'defaultAmount': 200
+    'name': 'Water',
+    'icon': Icons.water_drop,
+    'color': const Color(0xFF4FC3F7),
+    'defaultAmount': 200,
   };
-  
+
   DateTime _selectedDate = DateTime.now();
-  int _currentWaterIntake = 0; // Always Today
-  int _historyWaterIntake = 0; // Intake for the selected top-row date
+  int _currentWaterIntake = 0;
+  int _historyWaterIntake = 0;
   List<double> _weeklyIntakeData = [0, 0, 0, 0, 0, 0, 0];
+
+  StreamSubscription? _userSubscription;
   StreamSubscription? _todaySubscription;
   StreamSubscription? _historySubscription;
-  StreamSubscription? _goalSubscription;
 
-  final DatabaseService _databaseService = DatabaseService();
+  final DatabaseService _db = DatabaseService();
 
   @override
   void initState() {
     super.initState();
+    _setupUserListener();
     _setupTodayListener();
     _setupHistoryListener(_selectedDate);
-    _setupGoalListener();
     _loadWeeklyData();
   }
 
   @override
   void dispose() {
+    _userSubscription?.cancel();
     _todaySubscription?.cancel();
     _historySubscription?.cancel();
-    _goalSubscription?.cancel();
     super.dispose();
   }
 
-  void _setupGoalListener() {
-    _goalSubscription = _databaseService.getUserSettingsStream().listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>;
-        if (data.containsKey('dailyGoal') && mounted) {
-          setState(() {
-            _dailyGoal = data['dailyGoal'] ?? 2210;
-          });
-          _loadWeeklyData(); // Refresh chart percentages
-        }
-        if (data.containsKey('profileIcon') && mounted) {
-          setState(() {
-            _profileIcon = data['profileIcon'] ?? '👤';
-          });
-        }
+  void _setupUserListener() {
+    _userSubscription = _db.getUserModelStream().listen((user) {
+      if (user != null && mounted) {
+        setState(() {
+          _dailyGoal = user.dailyGoal;
+          _profileIcon = user.profileIcon;
+        });
+        _loadWeeklyData();
       }
     });
   }
 
   void _setupTodayListener() {
-    String todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _todaySubscription = FirebaseFirestore.instance
-        .collection('users')
-        .doc(_databaseService.uid)
-        .collection('consumption')
-        .doc(todayStr)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists) {
+    _todaySubscription = _db.getTodayConsumptionStream().listen((snapshot) {
+      if (snapshot.exists && mounted) {
         final data = snapshot.data() as Map<String, dynamic>;
-        if (mounted) {
-          setState(() {
-            _currentWaterIntake = data['intake'] ?? 0;
-          });
-          _loadWeeklyData();
-        }
-      } else {
-        if (mounted) setState(() => _currentWaterIntake = 0);
+        setState(() {
+          _currentWaterIntake = data['intake'] ?? 0;
+        });
+        _loadWeeklyData();
+      } else if (mounted) {
+        setState(() => _currentWaterIntake = 0);
       }
     });
   }
@@ -106,24 +88,13 @@ class _MainScreenState extends State<MainScreen> {
   void _setupHistoryListener(DateTime date) {
     _historySubscription?.cancel();
     String dateStr = DateFormat('yyyy-MM-dd').format(date);
-    
-    _historySubscription = FirebaseFirestore.instance
-        .collection('users')
-        .doc(_databaseService.uid)
-        .collection('consumption')
-        .doc(dateStr)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>;
-        if (mounted) {
-          setState(() {
-            _historyWaterIntake = data['intake'] ?? 0;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _historyWaterIntake = 0);
-      }
+
+    _historySubscription = _db.getTodayConsumptionStream().listen((_) async {
+      // getTodayConsumptionStream is actually for today, but we need for historical date.
+      // Actually _db doesn't have a generic stream for dates yet.
+      // For now, let's just fetch once when date changes or use a simple future.
+      int intake = await _db.getIntakeForDate(dateStr);
+      if (mounted) setState(() => _historyWaterIntake = intake);
     });
   }
 
@@ -131,19 +102,18 @@ class _MainScreenState extends State<MainScreen> {
     DateTime now = DateTime.now();
     int currentDayIndex = now.weekday - 1;
     List<String> dates = [];
-    
+
     for (int i = 0; i < 7; i++) {
       DateTime date = now.subtract(Duration(days: currentDayIndex - i));
       dates.add(DateFormat('yyyy-MM-dd').format(date));
     }
 
-    Map<String, int> data = await _databaseService.getWeeklyConsumption(dates);
-    
+    Map<String, int> data = await _db.getWeeklyConsumption(dates);
+
     if (mounted) {
       setState(() {
         _weeklyIntakeData = dates.map((d) {
           int intake = data[d] ?? 0;
-          // Calculate percentage for the chart (assuming goal is 2210)
           return (intake / _dailyGoal * 100).clamp(0.0, 100.0);
         }).toList();
       });
@@ -160,56 +130,21 @@ class _MainScreenState extends State<MainScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      if (index != 2) {
-        _isDrinkSelectionOpen = false;
-      }
+      if (index != 2) _isDrinkSelectionOpen = false;
     });
   }
 
   void _addWater(int amount) {
-    _updateDatabaseIntake(_currentWaterIntake + amount, DateTime.now());
+    _db.updateWaterIntake(_currentWaterIntake + amount);
   }
 
   void _subtractWater(int amount) {
     int newIntake = (_currentWaterIntake - amount).clamp(0, 99999);
-    _updateDatabaseIntake(newIntake, DateTime.now());
+    _db.updateWaterIntake(newIntake);
   }
 
-  void _updateGoal(int newGoal) {
-    _databaseService.updateDailyGoal(newGoal);
-  }
-
-  void _updateProfileIcon(String icon) {
-    _databaseService.updateProfileIcon(icon);
-  }
-
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
-  }
-
-  void _showOnlyTodayError() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("You can only track intake for today!"),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _updateDatabaseIntake(int amount, DateTime date) async {
-    String dateStr = DateFormat('yyyy-MM-dd').format(date);
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_databaseService.uid)
-        .collection('consumption')
-        .doc(dateStr)
-        .set({
-      'intake': amount,
-      'timestamp': FieldValue.serverTimestamp(),
-      'lastUpdated': DateTime.now().toIso8601String(),
-    }, SetOptions(merge: true));
-  }
+  void _updateGoal(int newGoal) => _db.updateDailyGoal(newGoal);
+  void _updateProfileIcon(String icon) => _db.updateProfileIcon(icon);
 
   void _toggleDrinkSelection() {
     setState(() {
@@ -237,10 +172,7 @@ class _MainScreenState extends State<MainScreen> {
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
               transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
+                return FadeTransition(opacity: animation, child: child);
               },
               child: _isDrinkSelectionOpen
                   ? DrinkSelectionPage(
@@ -315,18 +247,13 @@ class _MainScreenState extends State<MainScreen> {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
+        return FadeTransition(opacity: animation, child: child);
       },
       child: page,
     );
   }
 
   Widget _buildBottomNavBar(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       height: 65,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
@@ -353,10 +280,20 @@ class _MainScreenState extends State<MainScreen> {
             child: Row(
               children: [
                 Expanded(child: _buildNavItem(0, Icons.home_rounded, "Home")),
-                Expanded(child: _buildNavItem(1, Icons.alarm_rounded, "Reminders")),
+                Expanded(
+                  child: _buildNavItem(1, Icons.alarm_rounded, "Reminders"),
+                ),
                 Expanded(child: _buildCenterActionItem()),
-                Expanded(child: _buildNavItem(3, Icons.emoji_events_rounded, "Ranking")),
-                Expanded(child: _buildNavItem(4, Icons.settings_rounded, "Settings")),
+                Expanded(
+                  child: _buildNavItem(
+                    3,
+                    Icons.emoji_events_rounded,
+                    "Ranking",
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(4, Icons.settings_rounded, "Settings"),
+                ),
               ],
             ),
           ),
@@ -379,12 +316,16 @@ class _MainScreenState extends State<MainScreen> {
             duration: const Duration(milliseconds: 300),
             padding: EdgeInsets.all(isSelected ? 5 : 0),
             decoration: BoxDecoration(
-              color: isSelected ? colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+              color: isSelected
+                  ? colorScheme.primary.withOpacity(0.1)
+                  : Colors.transparent,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: isSelected ? colorScheme.primary : const Color(0xFF2D3142).withOpacity(0.4),
+              color: isSelected
+                  ? colorScheme.primary
+                  : const Color(0xFF2D3142).withOpacity(0.4),
               size: isSelected ? 22 : 20,
             ),
           ),
@@ -392,12 +333,14 @@ class _MainScreenState extends State<MainScreen> {
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? colorScheme.primary : const Color(0xFF2D3142).withOpacity(0.4),
+              color: isSelected
+                  ? colorScheme.primary
+                  : const Color(0xFF2D3142).withOpacity(0.4),
               fontSize: 8,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
           ),
-          if (isSelected) 
+          if (isSelected)
             Container(
               margin: const EdgeInsets.only(top: 4),
               width: 4,
@@ -421,7 +364,9 @@ class _MainScreenState extends State<MainScreen> {
       child: Center(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          transform: isActive ? (Matrix4.identity()..scale(1.15)) : Matrix4.identity(),
+          transform: isActive
+              ? (Matrix4.identity()..scale(1.15))
+              : Matrix4.identity(),
           transformAlignment: Alignment.center,
           child: Transform.rotate(
             angle: 0.785398, // 45 degrees
@@ -432,12 +377,16 @@ class _MainScreenState extends State<MainScreen> {
                 color: isActive ? colorScheme.primary : const Color(0xFF928FFF),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white, 
+                  color: Colors.white,
                   width: isActive ? 2 : 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isActive ? colorScheme.primary : const Color(0xFF928FFF)).withAlpha(isActive ? 160 : 100),
+                    color:
+                        (isActive
+                                ? colorScheme.primary
+                                : const Color(0xFF928FFF))
+                            .withAlpha(isActive ? 160 : 100),
                     blurRadius: isActive ? 18 : 10,
                     spreadRadius: isActive ? 4 : 2,
                     offset: isActive ? Offset.zero : const Offset(0, 3),

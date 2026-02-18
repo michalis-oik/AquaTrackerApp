@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:water_tracking_app/utils/calendarDayBox.dart';
-import 'package:water_tracking_app/utils/glassmorphism_card.dart';
+import 'package:water_tracking_app/widgets/calendar_day_box.dart';
+import 'package:water_tracking_app/widgets/glassmorphism_card.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:water_tracking_app/utils/hydrationStatsChart.dart';
+import 'package:water_tracking_app/widgets/hydration_stats_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
@@ -61,7 +61,8 @@ class _HomePageState extends State<HomePage> {
         'fullDate': date,
       });
       // Synchronize initial selected index based on selectedDate prop
-      if (DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(widget.selectedDate)) {
+      if (DateFormat('yyyy-MM-dd').format(date) ==
+          DateFormat('yyyy-MM-dd').format(widget.selectedDate)) {
         _selectedIndex = i;
       }
     }
@@ -71,16 +72,18 @@ class _HomePageState extends State<HomePage> {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
-    
+
     // Use historyIntake for the top row card
-    final double percentageOfGoal = (widget.historyIntake / widget.dailyGoal) * 100;
+    final double percentageOfGoal =
+        (widget.historyIntake / widget.dailyGoal) * 100;
     final double percentageDifference = percentageOfGoal - 100;
-    
+
     final String sign = percentageDifference >= 0 ? '+' : '';
-    final String goalStatusText = "$sign${percentageDifference.toStringAsFixed(0)}%";
-    
-    final Color goalStatusColor = percentageDifference >= 0 
-        ? Colors.green.shade400 
+    final String goalStatusText =
+        "$sign${percentageDifference.toStringAsFixed(0)}%";
+
+    final Color goalStatusColor = percentageDifference >= 0
+        ? Colors.green.shade400
         : colorScheme.onSurface.withAlpha(204);
 
     return Column(
@@ -102,9 +105,11 @@ class _HomePageState extends State<HomePage> {
                 child: GestureDetector(
                   onTap: () {
                     setState(() => _selectedIndex = index);
-                    widget.onDateSelected(_weekDays[index]['fullDate'] as DateTime);
+                    widget.onDateSelected(
+                      _weekDays[index]['fullDate'] as DateTime,
+                    );
                   },
-                  child: Calendardaybox(
+                  child: CalendarDayBox(
                     dayOfWeek: _weekDays[index]['dayOfWeek']!,
                     dayOfMonth: _weekDays[index]['dayOfMonth']!,
                     isSelected: _selectedIndex == index,
@@ -120,7 +125,10 @@ class _HomePageState extends State<HomePage> {
           children: [
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 8,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.surface.withAlpha(38),
                   borderRadius: BorderRadius.circular(15),
@@ -128,7 +136,11 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.water_drop_outlined, color: colorScheme.primary, size: 28),
+                    Icon(
+                      Icons.water_drop_outlined,
+                      color: colorScheme.primary,
+                      size: 28,
+                    ),
                     const SizedBox(height: 8),
                     FittedBox(
                       fit: BoxFit.scaleDown,
@@ -156,7 +168,10 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 15),
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 8,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.surface.withAlpha(38),
                   borderRadius: BorderRadius.circular(15),
@@ -164,7 +179,11 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.track_changes_outlined, color: goalStatusColor, size: 28),
+                    Icon(
+                      Icons.track_changes_outlined,
+                      color: goalStatusColor,
+                      size: 28,
+                    ),
                     const SizedBox(height: 8),
                     FittedBox(
                       fit: BoxFit.scaleDown,
@@ -208,13 +227,15 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(
                 "Daily Drink Target",
-                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 "Stay hydrated, stay healthy!",
                 style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withAlpha(179)
+                  color: colorScheme.onSurface.withAlpha(179),
                 ),
               ),
               const SizedBox(height: 40),
@@ -224,7 +245,7 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20), 
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
                             color: colorScheme.primary.withAlpha(128),
@@ -238,9 +259,14 @@ class _HomePageState extends State<HomePage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colorScheme.primary,
                           foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          elevation: 0, 
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 8,
+                          ),
                         ),
                         onPressed: widget.onAddWater,
                         child: Text(
@@ -257,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                     width: 40,
                     height: 40,
                     child: Stack(
-                      clipBehavior: Clip.none, 
+                      clipBehavior: Clip.none,
                       children: [
                         Container(
                           decoration: BoxDecoration(
@@ -303,7 +329,10 @@ class _HomePageState extends State<HomePage> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: colorScheme.secondary,
-                                border: Border.all(color: colorScheme.primary, width: 1),
+                                border: Border.all(
+                                  color: colorScheme.primary,
+                                  width: 1,
+                                ),
                               ),
                               child: Icon(
                                 Icons.swap_horiz,
@@ -348,7 +377,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -357,7 +386,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -365,7 +394,10 @@ class _HomePageState extends State<HomePage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [colorScheme.primary.withAlpha(179), colorScheme.surface],
+                colors: [
+                  colorScheme.primary.withAlpha(179),
+                  colorScheme.surface,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -385,14 +417,32 @@ class _HomePageState extends State<HomePage> {
                           CircleAvatar(
                             radius: 20,
                             backgroundColor: colorScheme.primary,
-                            child: Text(widget.profileIcon, style: const TextStyle(fontSize: 20)),
+                            child: Text(
+                              widget.profileIcon,
+                              style: const TextStyle(fontSize: 20),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Hello", style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withAlpha(179))),
-                              Text(FirebaseAuth.instance.currentUser?.displayName ?? "User", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+                              Text(
+                                "Hello",
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurface.withAlpha(179),
+                                ),
+                              ),
+                              Text(
+                                FirebaseAuth
+                                        .instance
+                                        .currentUser
+                                        ?.displayName ??
+                                    "User",
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -400,7 +450,11 @@ class _HomePageState extends State<HomePage> {
                       CircleAvatar(
                         radius: 20,
                         backgroundColor: colorScheme.primary,
-                        child: Icon(Icons.notifications_none, color: colorScheme.onPrimary, size: 24),
+                        child: Icon(
+                          Icons.notifications_none,
+                          color: colorScheme.onPrimary,
+                          size: 24,
+                        ),
                       ),
                     ],
                   ),
@@ -409,9 +463,13 @@ class _HomePageState extends State<HomePage> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          GlassmorphismCard(child: _buildWaterTrackerCardContent(context)),
+                          GlassmorphismCard(
+                            child: _buildWaterTrackerCardContent(context),
+                          ),
                           const SizedBox(height: 20),
-                          GlassmorphismCard(child: _buildDailyGoalCardContent(context)),
+                          GlassmorphismCard(
+                            child: _buildDailyGoalCardContent(context),
+                          ),
                           const SizedBox(height: 20),
                           HydrationStatsChart(weeklyData: widget.weeklyData),
                           const SizedBox(height: 20),
@@ -426,10 +484,5 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
-
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 }

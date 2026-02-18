@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:water_tracking_app/utils/glassmorphism_card.dart';
 
 class SettingsPage extends StatefulWidget {
   final int currentGoal;
@@ -9,8 +8,8 @@ class SettingsPage extends StatefulWidget {
   final Function(String) onIconUpdated;
 
   const SettingsPage({
-    super.key, 
-    required this.currentGoal, 
+    super.key,
+    required this.currentGoal,
     required this.currentIcon,
     required this.onGoalUpdated,
     required this.onIconUpdated,
@@ -26,7 +25,20 @@ class _SettingsPageState extends State<SettingsPage> {
   late String _selectedIcon;
   final User? _user = FirebaseAuth.instance.currentUser;
 
-  final List<String> animalIcons = ['👤', '🦊', '🦄', '🐻', '🐱', '🦁', '🐰', '🐼', '🐨', '🐯', '🐘', '🦒'];
+  final List<String> animalIcons = [
+    '👤',
+    '🦊',
+    '🦄',
+    '🐻',
+    '🐱',
+    '🦁',
+    '🐰',
+    '🐼',
+    '🐨',
+    '🐯',
+    '🐘',
+    '🦒',
+  ];
 
   @override
   void initState() {
@@ -47,7 +59,10 @@ class _SettingsPageState extends State<SettingsPage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [colorScheme.primary.withAlpha(179), colorScheme.surface],
+                colors: [
+                  colorScheme.primary.withAlpha(179),
+                  colorScheme.surface,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -59,7 +74,13 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Settings', style: textTheme.headlineMedium?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Settings',
+                    style: textTheme.headlineMedium?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 30),
 
                   _buildProfileSection(context),
@@ -84,7 +105,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     trailing: Switch(
                       value: _notificationsEnabled,
                       activeColor: colorScheme.primary,
-                      onChanged: (val) => setState(() => _notificationsEnabled = val),
+                      onChanged: (val) =>
+                          setState(() => _notificationsEnabled = val),
                     ),
                   ),
 
@@ -98,7 +120,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () async {
                       await FirebaseAuth.instance.signOut();
                       if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true).pushReplacementNamed('/');
+                        Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pushReplacementNamed('/');
                       }
                     },
                   ),
@@ -115,7 +140,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF2D3142).withOpacity(0.5), letterSpacing: 1.2),
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF2D3142).withOpacity(0.5),
+        letterSpacing: 1.2,
+      ),
     );
   }
 
@@ -147,8 +177,18 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_user?.displayName ?? 'User', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
-                Text(_user?.email ?? 'anonymous', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                Text(
+                  _user?.displayName ?? 'User',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+                Text(
+                  _user?.email ?? 'anonymous',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                ),
               ],
             ),
           ),
@@ -180,11 +220,18 @@ class _SettingsPageState extends State<SettingsPage> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isSelected ? colorScheme.primary.withOpacity(0.2) : Colors.white.withOpacity(0.5),
+                color: isSelected
+                    ? colorScheme.primary.withOpacity(0.2)
+                    : Colors.white.withOpacity(0.5),
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? colorScheme.primary : Colors.transparent, width: 2),
+                border: Border.all(
+                  color: isSelected ? colorScheme.primary : Colors.transparent,
+                  width: 2,
+                ),
               ),
-              child: Center(child: Text(icon, style: const TextStyle(fontSize: 24))),
+              child: Center(
+                child: Text(icon, style: const TextStyle(fontSize: 24)),
+              ),
             ),
           );
         }).toList(),
@@ -207,8 +254,18 @@ class _SettingsPageState extends State<SettingsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Daily Intake Goal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('${_goalValue.toInt()} ml', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
+              const Text(
+                'Daily Intake Goal',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Text(
+                '${_goalValue.toInt()} ml',
+                style: TextStyle(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -224,16 +281,45 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildSettingTile({required IconData icon, required String title, String? subtitle, Widget? trailing, Color? titleColor, VoidCallback? onTap}) {
+  Widget _buildSettingTile({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    Color? titleColor,
+    VoidCallback? onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.4), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5)),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+      ),
       child: ListTile(
         onTap: onTap,
-        leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: const Color(0xFF928FFF), size: 20)),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: titleColor ?? const Color(0xFF2D3142))),
-        subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
-        trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: const Color(0xFF928FFF), size: 20),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: titleColor ?? const Color(0xFF2D3142),
+          ),
+        ),
+        subtitle: subtitle != null
+            ? Text(subtitle, style: const TextStyle(fontSize: 12))
+            : null,
+        trailing:
+            trailing ??
+            const Icon(Icons.chevron_right_rounded, color: Colors.grey),
       ),
     );
   }

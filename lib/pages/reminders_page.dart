@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:water_tracking_app/utils/glassmorphism_card.dart';
+import 'package:water_tracking_app/widgets/glassmorphism_card.dart';
 
 class RemindersPage extends StatefulWidget {
   final int currentIntake;
@@ -69,78 +69,85 @@ class _RemindersPageState extends State<RemindersPage> {
           SafeArea(
             child: Column(
               children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildHeaderButton(Icons.chevron_left, () {}),
-                  Text(
-                    "Reminders",
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 20,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildHeaderButton(Icons.chevron_left, () {}),
+                      Text(
+                        "Reminders",
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      _buildHeaderButton(Icons.more_horiz, () {}),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        // Circular Progress (Liquid Visualization)
+                        _buildLiquidProgressIndicator(context),
+
+                        const SizedBox(height: 30),
+
+                        // Today Selector & Time Range
+                        _buildTimeFilterSection(context),
+
+                        const SizedBox(height: 40),
+
+                        // Records List
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Today's records",
+                                style: textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: records.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 15),
+                                itemBuilder: (context, index) {
+                                  return _buildRecordCard(
+                                    context,
+                                    records[index],
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 100), // Space for bottom nav
+                      ],
                     ),
                   ),
-                  _buildHeaderButton(Icons.more_horiz, () {}),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    // Circular Progress (Liquid Visualization)
-                    _buildLiquidProgressIndicator(context),
-
-                    const SizedBox(height: 30),
-
-                    // Today Selector & Time Range
-                    _buildTimeFilterSection(context),
-
-                    const SizedBox(height: 40),
-
-                    // Records List
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Today's records",
-                            style: textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: records.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 15),
-                            itemBuilder: (context, index) {
-                              return _buildRecordCard(context, records[index]);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 100), // Space for bottom nav
-                  ],
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
-}
+    );
+  }
 
   Widget _buildHeaderButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
@@ -148,14 +155,21 @@ class _RemindersPageState extends State<RemindersPage> {
       child: GlassmorphismCard(
         padding: const EdgeInsets.all(10),
         borderRadius: 50,
-        child: Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 20),
+        child: Icon(
+          icon,
+          color: Theme.of(context).colorScheme.onSurface,
+          size: 20,
+        ),
       ),
     );
   }
 
   Widget _buildLiquidProgressIndicator(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    double percentage = (widget.currentIntake / widget.dailyGoal).clamp(0.0, 1.0);
+    double percentage = (widget.currentIntake / widget.dailyGoal).clamp(
+      0.0,
+      1.0,
+    );
 
     return SizedBox(
       width: 280,
@@ -175,7 +189,7 @@ class _RemindersPageState extends State<RemindersPage> {
               ),
             ),
           ),
-          
+
           // Outer progress arc
           SizedBox(
             width: 210,
@@ -235,16 +249,24 @@ class _RemindersPageState extends State<RemindersPage> {
               ),
             ),
           ),
-          
+
           Positioned(
             left: 0,
             bottom: 40,
-            child: Icon(Icons.favorite, color: Colors.orange.shade300, size: 28),
+            child: Icon(
+              Icons.favorite,
+              color: Colors.orange.shade300,
+              size: 28,
+            ),
           ),
           Positioned(
             right: 0,
             bottom: 40,
-            child: Icon(Icons.water_drop, color: Colors.blue.shade300, size: 28),
+            child: Icon(
+              Icons.water_drop,
+              color: Colors.blue.shade300,
+              size: 28,
+            ),
           ),
         ],
       ),
@@ -259,7 +281,9 @@ class _RemindersPageState extends State<RemindersPage> {
           children: [
             Text(
               "Today",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Icon(Icons.arrow_drop_down),
           ],
@@ -287,7 +311,11 @@ class _RemindersPageState extends State<RemindersPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(13), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(
+            color: Colors.black.withAlpha(13),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Text(text, style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -295,8 +323,6 @@ class _RemindersPageState extends State<RemindersPage> {
   }
 
   Widget _buildRecordCard(BuildContext context, Map<String, dynamic> record) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
     return GlassmorphismCard(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       borderRadius: 20,
@@ -305,11 +331,13 @@ class _RemindersPageState extends State<RemindersPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: record['isUpcoming'] ? record['color'].withAlpha(204) : Colors.white,
+              color: record['isUpcoming']
+                  ? record['color'].withAlpha(204)
+                  : Colors.white,
               shape: BoxShape.circle,
             ),
             child: Icon(
-              record['icon'], 
+              record['icon'],
               color: record['isUpcoming'] ? Colors.white : record['color'],
               size: 24,
             ),
@@ -321,7 +349,10 @@ class _RemindersPageState extends State<RemindersPage> {
               children: [
                 Text(
                   record['time'],
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 Text(
                   record['label'],
@@ -336,7 +367,9 @@ class _RemindersPageState extends State<RemindersPage> {
           ),
           const SizedBox(width: 10),
           Icon(
-            record['isUpcoming'] ? Icons.hourglass_top_rounded : Icons.more_vert,
+            record['isUpcoming']
+                ? Icons.hourglass_top_rounded
+                : Icons.more_vert,
             color: Colors.grey.shade400,
             size: 20,
           ),
