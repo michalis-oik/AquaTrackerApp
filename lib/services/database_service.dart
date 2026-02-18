@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
@@ -301,4 +302,60 @@ class DatabaseService {
   }
 
   String get _todayStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  // --- Reminders Logic ---
+
+  Stream<List<Map<String, dynamic>>> getRemindersStream() {
+    if (uid == null) return Stream.value([]);
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('reminders')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'id': data['id'],
+              'time': data['time'],
+              'label': data['label'],
+              'amount': data['amount'],
+              'isUpcoming': data['isUpcoming'],
+              'icon': IconData(data['iconCode'], fontFamily: 'MaterialIcons'),
+              'color': Color(data['colorValue']),
+              'docId': doc.id,
+            };
+          }).toList();
+        });
+  }
+
+  Future<void> saveReminder(Map<String, dynamic> reminder) async {
+    if (uid == null) return;
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('reminders')
+        .doc(reminder['id'].toString())
+        .set(
+          {
+              ...reminder,
+              'iconCode': (reminder['icon'] as IconData).codePoint,
+              'colorValue': (reminder['color'] as Color).value,
+              'timestamp': FieldValue.serverTimestamp(),
+            }
+            ..remove('icon')
+            ..remove('color'),
+        );
+  }
+
+  Future<void> deleteReminder(int id) async {
+    if (uid == null) return;
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('reminders')
+        .doc(id.toString())
+        .delete();
+  }
 }

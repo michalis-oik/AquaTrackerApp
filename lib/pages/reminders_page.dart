@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:water_tracking_app/widgets/glassmorphism_card.dart';
+import 'package:water_tracking_app/services/notification_service.dart';
+import 'package:water_tracking_app/services/database_service.dart';
 
 class RemindersPage extends StatefulWidget {
   final int currentIntake;
@@ -16,32 +18,76 @@ class RemindersPage extends StatefulWidget {
 }
 
 class _RemindersPageState extends State<RemindersPage> {
-  final List<Map<String, dynamic>> records = [
-    {
-      'time': '05:00 PM',
-      'label': 'Next time',
-      'amount': '200 ml',
-      'isUpcoming': true,
-      'icon': Icons.alarm_rounded,
-      'color': Colors.deepPurpleAccent,
-    },
-    {
-      'time': '03:00 PM',
-      'label': 'Water',
-      'amount': '200 ml',
-      'isUpcoming': false,
-      'icon': Icons.local_drink_rounded,
-      'color': Colors.lightBlueAccent,
-    },
-    {
-      'time': '01:00 PM',
-      'label': 'Coffee',
-      'amount': '200 ml',
-      'isUpcoming': false,
-      'icon': Icons.coffee_rounded,
-      'color': Colors.orangeAccent,
-    },
-  ];
+  final DatabaseService _dbService = DatabaseService();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _addReminder() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      final now = DateTime.now();
+      DateTime scheduledTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        picked.hour,
+        picked.minute,
+      );
+
+      // Unique ID for notification
+      final int id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+
+      await NotificationService().scheduleNotification(
+        id: id,
+        title: "Hydration Reminder 💧",
+        body: "Time for a fresh glass of water! Keep it up.",
+        scheduledTime: scheduledTime,
+      );
+
+      final newReminder = {
+        'id': id,
+        'time': picked.format(context),
+        'label': 'Scheduled',
+        'amount': '200 ml',
+        'isUpcoming': true,
+        'icon': Icons.alarm_rounded,
+        'color': Colors.deepPurpleAccent,
+      };
+
+      await _dbService.saveReminder(newReminder);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Reminder scheduled!')));
+    }
+  }
+
+  void _deleteRecord(Map<String, dynamic> record) async {
+    if (record['isUpcoming'] == true && record['id'] != null) {
+      await NotificationService().cancelNotification(record['id']);
+    }
+
+    await _dbService.deleteReminder(record['id']);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            record['isUpcoming'] ? 'Reminder deleted' : 'Record removed',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +132,7 @@ class _RemindersPageState extends State<RemindersPage> {
                           color: colorScheme.onSurface,
                         ),
                       ),
-                      _buildHeaderButton(Icons.more_horiz, () {}),
+                      _buildHeaderButton(Icons.add, _addReminder),
                     ],
                   ),
                 ),
@@ -120,16 +166,41 @@ class _RemindersPageState extends State<RemindersPage> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: records.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(height: 15),
-                                itemBuilder: (context, index) {
-                                  return _buildRecordCard(
-                                    context,
-                                    records[index],
+                              StreamBuilder<List<Map<String, dynamic>>>(
+                                stream: _dbService.getRemindersStream(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+                                  if (!snapshot.hasData ||
+                                      snapshot.data!.isEmpty) {
+                                    return Center(
+                                      child: Text(
+                                        "No reminders yet",
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface
+                                              .withAlpha(128),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  final records = snapshot.data!;
+                                  return ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: records.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: 15),
+                                    itemBuilder: (context, index) {
+                                      return _buildRecordCard(
+                                        context,
+                                        records[index],
+                                      );
+                                    },
                                   );
                                 },
                               ),
@@ -366,12 +437,15 @@ class _RemindersPageState extends State<RemindersPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 10),
-          Icon(
-            record['isUpcoming']
-                ? Icons.hourglass_top_rounded
-                : Icons.more_vert,
-            color: Colors.grey.shade400,
-            size: 20,
+          GestureDetector(
+            onTap: () => _deleteRecord(record),
+            child: Icon(
+              record['isUpcoming']
+                  ? Icons.delete_outline_rounded
+                  : Icons.more_vert,
+              color: Colors.grey.shade400,
+              size: 20,
+            ),
           ),
         ],
       ),

@@ -4,12 +4,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:water_tracking_app/pages/main_screen.dart';
 import 'package:water_tracking_app/pages/login_page.dart';
 import 'package:water_tracking_app/pages/signup_page.dart';
+import 'package:water_tracking_app/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
   await Firebase.initializeApp();
+
+  // Initialize Notifications
+  await NotificationService().init();
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
